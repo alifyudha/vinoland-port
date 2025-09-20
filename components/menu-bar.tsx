@@ -1,0 +1,474 @@
+"use client"
+
+import type * as React from "react"
+import { motion } from "framer-motion"
+import { Home, FolderOpen, Gamepad2, User, ExternalLink, Clock, Music, Play, Pause, Volume2 } from "lucide-react"
+import { useTheme } from "next-themes"
+import { useState, useEffect, useRef } from "react"
+
+interface MenuItem {
+  icon: React.ReactNode
+  label: string
+  href: string
+  gradient: string
+  iconColor: string
+}
+
+const menuItems: MenuItem[] = [
+  {
+    icon: <Home className="h-5 w-5" />,
+    label: "Home",
+    href: "#",
+    gradient: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
+    iconColor: "text-blue-500",
+  },
+  {
+    icon: <FolderOpen className="h-5 w-5" />,
+    label: "Project",
+    href: "#",
+    gradient: "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
+    iconColor: "text-orange-500",
+  },
+  {
+    icon: <Gamepad2 className="h-5 w-5" />,
+    label: "Games",
+    href: "#",
+    gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
+    iconColor: "text-green-500",
+  },
+  {
+    icon: <User className="h-5 w-5" />,
+    label: "Profile",
+    href: "#",
+    gradient: "radial-gradient(circle, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.06) 50%, rgba(185,28,28,0) 100%)",
+    iconColor: "text-red-500",
+  },
+]
+
+const tabVariants = {
+  initial: { scale: 1 },
+  hover: {
+    scale: 1.1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 300,
+      damping: 20,
+    },
+  },
+}
+
+const projects = [
+  {
+    id: 1,
+    title: "VTeam",
+    description: "A Things that let you interact with Steam client.",
+    image: "/woila.jpg",
+    link: "https://vinoland.dev",
+    tech: ["Paid"],
+  },
+]
+
+function TypewriterEffect({ text }: { text: string }) {
+  const [displayText, setDisplayText] = useState("")
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteCount, setDeleteCount] = useState(0)
+
+  useEffect(() => {
+    const timeout = setTimeout(
+      () => {
+        if (!isDeleting) {
+          if (currentIndex < text.length) {
+            setDisplayText((prev) => prev + text[currentIndex])
+            setCurrentIndex((prev) => prev + 1)
+
+            if (currentIndex > 10 && Math.random() < 0.08) {
+              setIsDeleting(true)
+              setDeleteCount(0)
+            }
+          }
+        } else {
+          const protectedChars = ["❛", "."]
+          const canDelete =
+            displayText.length > 0 && deleteCount < 2 && !protectedChars.includes(displayText[displayText.length - 1])
+
+          if (canDelete) {
+            setDisplayText((prev) => prev.slice(0, -1))
+            setCurrentIndex((prev) => prev - 1)
+            setDeleteCount((prev) => prev + 1)
+          } else {
+            setIsDeleting(false)
+            setDeleteCount(0)
+          }
+        }
+      },
+      isDeleting ? 30 : 50,
+    )
+
+    return () => clearTimeout(timeout)
+  }, [currentIndex, text, displayText, isDeleting, deleteCount])
+
+  useEffect(() => {
+    setDisplayText("")
+    setCurrentIndex(0)
+    setIsDeleting(false)
+    setDeleteCount(0)
+  }, [text])
+
+  return (
+    <div className="text-2xl font-medium text-foreground mb-8 h-8 flex items-center">
+      {displayText}
+      <span className="animate-pulse ml-1 text-primary">|</span>
+    </div>
+  )
+}
+
+function MusicPlayer() {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(0.75)
+  const rafRef = useRef<number | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+
+  // Normalize and set duration safely
+  const updateDuration = () => {
+    const a = audioRef.current
+    if (!a) return
+    let d = a.duration
+    // Some browsers give Infinity/NaN until buffered; fallback to seekable
+    if (!Number.isFinite(d) || d <= 0) {
+      try {
+        if (a.seekable && a.seekable.length > 0) {
+          d = a.seekable.end(a.seekable.length - 1)
+        }
+      } catch (_) {
+        /* noop */
+      }
+    }
+    if (Number.isFinite(d) && d > 0) setDuration(d)
+  }
+
+  // Smooth currentTime updates while playing (avoids throttled timeupdate)
+  const tick = () => {
+    const a = audioRef.current
+    if (a) {
+      setCurrentTime(a.currentTime)
+      // if duration was late, keep trying to lock it in
+      if (duration === 0) updateDuration()
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }
+
+  const startRaf = () => {
+    if (rafRef.current == null) rafRef.current = requestAnimationFrame(tick)
+  }
+  const stopRaf = () => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+  }
+
+  const togglePlay = () => {
+    const a = audioRef.current
+    if (!a) return
+    if (isPlaying) {
+      a.pause()
+    } else {
+      a.play().catch(() => {}) // ignore gesture/autoplay errors
+    }
+  }
+
+  // Event handlers
+  const handleLoadedMetadata = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.volume = volume
+    updateDuration()
+  }
+  const handleDurationChange = () => updateDuration()
+  const handleCanPlay = () => updateDuration()
+  const handleTimeUpdate = () => {
+    const a = audioRef.current
+    if (a) setCurrentTime(a.currentTime)
+  }
+  const handlePlay = () => {
+    setIsPlaying(true)
+    startRaf()
+  }
+  const handlePause = () => {
+    setIsPlaying(false)
+    stopRaf()
+  }
+  const handleEnded = () => {
+    setIsPlaying(false)
+    stopRaf()
+  }
+
+  // Keep element volume in sync if changed elsewhere
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume
+  }, [volume])
+
+  useEffect(() => {
+    return () => stopRaf() // cleanup on unmount
+  }, [])
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const a = audioRef.current
+    if (!a || duration <= 0) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const newTime = (clickX / rect.width) * duration
+    a.currentTime = newTime
+    setCurrentTime(newTime)
+  }
+
+  const handleVolumeChange = (e: React.MouseEvent<HTMLDivElement>) => {
+    const a = audioRef.current
+    if (!a) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const newVolume = Math.max(0, Math.min(1, clickX / rect.width))
+    setVolume(newVolume)
+    a.volume = newVolume
+  }
+
+  const formatTime = (time: number) => {
+    if (!Number.isFinite(time) || time < 0) return "0:00"
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`
+  }
+
+  return (
+    <motion.div
+      className="fixed bottom-6 right-6 bg-card/90 backdrop-blur-lg border border-border/40 rounded-2xl p-4 shadow-xl max-w-sm"
+      initial={{ opacity: 0, y: 100, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 25 }}
+    >
+      <audio
+        ref={audioRef}
+        preload="auto"
+        playsInline
+        crossOrigin="anonymous"
+        onLoadedMetadata={handleLoadedMetadata}
+        onDurationChange={handleDurationChange}
+        onCanPlay={handleCanPlay}
+        onTimeUpdate={handleTimeUpdate}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onEnded={handleEnded}
+      >
+        <source src="/sevdaliza-alibi.mp3" type="audio/mpeg" />
+      </audio>
+
+      <div className="flex items-center gap-3 mb-3">
+        <motion.div
+          className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center"
+          animate={{ rotate: isPlaying ? 360 : 0 }}
+          transition={{ duration: 8, repeat: isPlaying ? Number.POSITIVE_INFINITY : 0, ease: "linear" }}
+        >
+          <Music className="h-6 w-6 text-white" />
+        </motion.div>
+
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-semibold text-foreground truncate">Alibi</h4>
+          <p className="text-xs text-muted-foreground truncate">Sevdaliza ft. Pabllo</p>
+        </div>
+
+        <motion.button
+          onClick={togglePlay}
+          className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+        </motion.button>
+      </div>
+
+      <div className="space-y-2">
+        <div className="w-full h-1 bg-muted rounded-full cursor-pointer overflow-hidden" onClick={handleSeek}>
+          <motion.div
+            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+            style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            transition={{ duration: 0.1 }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center mt-3 gap-2">
+        <Volume2 className="h-4 w-4 text-muted-foreground" />
+        <div className="flex-1 h-1 bg-muted rounded-full cursor-pointer" onClick={handleVolumeChange}>
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-150"
+            style={{ width: `${volume * 100}%` }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+
+export function MenuBar() {
+  const { theme } = useTheme()
+  const [activeTab, setActiveTab] = useState("Home")
+
+  const isDarkTheme = theme === "dark"
+
+  return (
+    <div className="flex flex-col items-center">
+      {activeTab === "Home" && (
+        <div className="mb-8">
+          <TypewriterEffect text="❛❛Ultimately, every human is their own writer.❛❛" />
+        </div>
+      )}
+
+      {activeTab === "Project" && (
+        <div className="mb-8 w-full max-w-5xl">
+          <h2 className="text-3xl font-bold text-center mb-8 text-foreground">My Projects</h2>
+          <div className="flex justify-center">
+            {projects.map((project) => (
+              <motion.div
+                key={project.id}
+                className="bg-card border border-border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 w-full max-w-md"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: project.id * 0.1 }}
+              >
+                <div className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10 pointer-events-none" />
+                  <img
+                    src={project.image || "/placeholder.svg"}
+                    alt={project.title}
+                    className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-2 text-foreground">{project.title}</h3>
+                  <p className="text-muted-foreground mb-4 text-sm">{project.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.tech.map((tech) => (
+                      <span key={tech} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                  <motion.a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors duration-200 text-sm font-medium"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Go to Project
+                    <ExternalLink className="h-4 w-4" />
+                  </motion.a>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "Games" && (
+        <div className="mb-8 w-full max-w-md">
+          <motion.div
+            className="bg-card border border-border rounded-xl p-8 text-center shadow-lg"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-full mb-4"
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 3 }}
+            >
+              <Gamepad2 className="h-8 w-8 text-green-500" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Games</h2>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm">Coming Soon</span>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              This gonna be a random game i made or ts tab could be nothing so..
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      {activeTab === "Profile" && (
+        <div className="mb-8 w-full max-w-md">
+          <motion.div
+            className="bg-card border border-border rounded-xl p-8 text-center shadow-lg"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              className="inline-flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-full mb-4"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 2 }}
+            >
+              <User className="h-8 w-8 text-red-500" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Profile</h2>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm">Coming Soon</span>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              ts still coming soon too, maybe i put my bio or something idk
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      <motion.nav className="p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden">
+        <ul className="flex items-center gap-2 relative z-10">
+          {menuItems.map((item, index) => (
+            <motion.li key={item.label} className="relative">
+              <motion.a
+                href={item.href}
+                onClick={(e) => {
+                  e.preventDefault()
+                  setActiveTab(item.label)
+                }}
+                className={`flex items-center gap-2 px-4 py-2 relative z-10 transition-colors rounded-xl ${
+                  activeTab === item.label
+                    ? "bg-primary/10 text-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                variants={tabVariants}
+                initial="initial"
+                whileHover="hover"
+              >
+                <span
+                  className={`transition-colors duration-300 ${
+                    activeTab === item.label ? item.iconColor : "text-foreground hover:" + item.iconColor
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </motion.a>
+            </motion.li>
+          ))}
+        </ul>
+      </motion.nav>
+
+      <MusicPlayer />
+    </div>
+  )
+}
