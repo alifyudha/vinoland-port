@@ -248,7 +248,7 @@ function MusicPlayer() {
 
   return (
     <motion.div
-      className="fixed bottom-4 right-4 z-50"
+      className="fixed bottom-20 sm:bottom-4 right-4 z-50"
       initial={{ opacity: 0, y: 100, scale: 0.8 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 25 }}
