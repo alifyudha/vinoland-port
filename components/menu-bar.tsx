@@ -253,6 +253,23 @@ function MusicPlayer() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 25 }}
     >
+      {/* Audio element - always mounted */}
+      <audio
+        ref={audioRef}
+        preload="auto"
+        playsInline
+        crossOrigin="anonymous"
+        onLoadedMetadata={handleLoadedMetadata}
+        onDurationChange={handleDurationChange}
+        onCanPlay={handleCanPlay}
+        onTimeUpdate={handleTimeUpdate}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onEnded={handleEnded}
+      >
+        <source src="/sevdaliza-alibi.mp3" type="audio/mpeg" />
+      </audio>
+
       {/* Mobile compact view */}
       <div className="sm:hidden">
         <motion.button
@@ -261,7 +278,16 @@ function MusicPlayer() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <Music className="h-5 w-5 text-primary" />
+          {isPlaying ? (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+            >
+              <Music className="h-5 w-5 text-primary" />
+            </motion.div>
+          ) : (
+            <Music className="h-5 w-5 text-primary" />
+          )}
         </motion.button>
         
         {isExpanded && (
@@ -271,22 +297,6 @@ function MusicPlayer() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
           >
-            <audio
-              ref={audioRef}
-              preload="auto"
-              playsInline
-              crossOrigin="anonymous"
-              onLoadedMetadata={handleLoadedMetadata}
-              onDurationChange={handleDurationChange}
-              onCanPlay={handleCanPlay}
-              onTimeUpdate={handleTimeUpdate}
-              onPlay={handlePlay}
-              onPause={handlePause}
-              onEnded={handleEnded}
-            >
-              <source src="/sevdaliza-alibi.mp3" type="audio/mpeg" />
-            </audio>
-
             <div className="flex items-center gap-2 mb-3">
               <motion.div
                 className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -348,22 +358,6 @@ function MusicPlayer() {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 25 }}
       >
-        <audio
-          ref={audioRef}
-          preload="auto"
-          playsInline
-          crossOrigin="anonymous"
-          onLoadedMetadata={handleLoadedMetadata}
-          onDurationChange={handleDurationChange}
-          onCanPlay={handleCanPlay}
-          onTimeUpdate={handleTimeUpdate}
-          onPlay={handlePlay}
-          onPause={handlePause}
-          onEnded={handleEnded}
-        >
-          <source src="/sevdaliza-alibi.mp3" type="audio/mpeg" />
-        </audio>
-
         <div className="flex items-center gap-3 mb-3">
           <motion.div
             className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center"
@@ -427,7 +421,7 @@ export function MenuBar() {
   const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
 
   return (
-    <div className="flex flex-col items-center px-4 pb-20 sm:pb-8">
+    <div className="flex flex-col items-center px-4 pb-24 sm:pb-8">
       {activeTab === "Home" && (
         <div className="mb-6 sm:mb-8 w-full">
           <TypewriterEffect text="❛❛Ultimately, every human is their own writer.❛❛" />
@@ -676,8 +670,46 @@ export function MenuBar() {
         </div>
       )}
 
-      <motion.nav className="p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden">
-        <ul className="flex items-center gap-1 sm:gap-2 relative z-10">
+      {/* Mobile Bottom Navigation */}
+      <motion.nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-background via-background/95 to-background/80 backdrop-blur-lg border-t border-border/40">
+        <div className="max-w-sm mx-auto p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden">
+          <ul className="flex items-center justify-between gap-1 relative z-10">
+            {menuItems.map((item) => (
+              <motion.li key={item.label} className="relative flex-1">
+                <motion.a
+                  href={item.href}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setActiveTab(item.label)
+                  }}
+                  className={`flex flex-col items-center gap-1 px-2 py-2 relative z-10 transition-colors rounded-xl touch-manipulation ${
+                    activeTab === item.label
+                      ? "bg-primary/10 text-foreground"
+                      : "bg-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                  variants={tabVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span
+                    className={`transition-colors duration-300 ${
+                      activeTab === item.label ? item.iconColor : "text-foreground hover:" + item.iconColor
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
+                  <span className="text-xs font-medium">{item.label}</span>
+                </motion.a>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+      </motion.nav>
+
+      {/* Desktop Navigation */}
+      <motion.nav className="hidden sm:block p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden">
+        <ul className="flex items-center gap-2 relative z-10">
           {menuItems.map((item) => (
             <motion.li key={item.label} className="relative">
               <motion.a
@@ -686,7 +718,7 @@ export function MenuBar() {
                   e.preventDefault()
                   setActiveTab(item.label)
                 }}
-                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 relative z-10 transition-colors rounded-xl touch-manipulation ${
+                className={`flex items-center gap-2 px-4 py-2 relative z-10 transition-colors rounded-xl touch-manipulation ${
                   activeTab === item.label
                     ? "bg-primary/10 text-foreground"
                     : "bg-transparent text-muted-foreground hover:text-foreground"
@@ -703,7 +735,7 @@ export function MenuBar() {
                 >
                   {item.icon}
                 </span>
-                <span className="text-sm sm:text-base">{item.label}</span>
+                <span className="text-base">{item.label}</span>
               </motion.a>
             </motion.li>
           ))}
