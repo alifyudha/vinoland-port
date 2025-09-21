@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server"
 
-// ====== Runtime & caching (pakai Node, bukan Edge) ======
+// ===== Runtime / caching =====
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
-export const maxDuration = 60 // beri napas buat request pihak ke-3
+export const maxDuration = 60 // harmless; does not enforce fetch timeout
 
-// ====== Konfigurasi ======
+// ===== Config =====
+// Since you don't want .env, the key is hardcoded SERVER-SIDE here.
 const API_BASE = "https://api.maelyn.sbs"
-const API_KEY = "og2uP4xcuT"
-const DEFAULT_TIMEOUT_MS = 15000 // 15s
+const API_KEY = "og2uP4xcuT" // <-- your Maelyn key (kept on server; not exposed to client)
 
-// ====== Utils umum ======
-// (ID) Cek platform dari URL (server-side, biar client sederhana & aman)
+// ===== Utils =====
 function isTikTok(u: string) {
   try {
     const url = new URL(u)
@@ -43,19 +42,6 @@ function isYouTube(u: string) {
   }
 }
 
-// (ID) Timeout wrapper untuk fetch
-async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const res = await fetch(input, { ...init, signal: controller.signal, redirect: "follow" })
-    return res
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
-// (ID) Sanitasi filename untuk header download proxy
 function sanitizeFilename(s: string, fallback = "download") {
   const base = (s || fallback).trim().replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").slice(0, 120)
   return base || fallback
@@ -70,7 +56,7 @@ function guessExtFromUrl(url: string, fallback = "mp4") {
   return fallback
 }
 
-// (ID) SSRF minimal: hanya izinkan http/https + block host lokal umum
+// Minimal SSRF guard for proxy
 function isSafePublicUrl(u: string) {
   let parsed: URL
   try {
@@ -92,7 +78,7 @@ function isSafePublicUrl(u: string) {
   return true
 }
 
-// ====== Normalizers (biar bentuk response rapi & stabil ke client) ======
+// ===== Types =====
 type TikTokResult = {
   platform: string
   aweme_id: string
@@ -162,10 +148,10 @@ type Normalized =
   | { status: "Success"; type: "youtube"; result: YouTubeResult }
   | { status: "Error"; code: number; message: string }
 
-// ====== Core fetchers ======
+// ===== External callers (no timeout) =====
 async function fetchTikTok(url: string): Promise<Normalized> {
   const endpoint = `${API_BASE}/api/tiktok/download?url=${encodeURIComponent(url)}`
-  const res = await fetchWithTimeout(endpoint, { headers: { "mg-apikey": API_KEY as string } })
+  const res = await fetch(endpoint, { headers: { "mg-apikey": API_KEY } })
   const json = await res.json().catch(() => ({}))
   if (res.ok && json?.status === "Success" && json?.result) {
     return { status: "Success", type: "tiktok", result: json.result as TikTokResult }
@@ -186,7 +172,7 @@ async function fetchTikTok(url: string): Promise<Normalized> {
 
 async function fetchInstagram(url: string): Promise<Normalized> {
   const endpoint = `${API_BASE}/api/instagram?url=${encodeURIComponent(url)}`
-  const res = await fetchWithTimeout(endpoint, { headers: { "mg-apikey": API_KEY as string } })
+  const res = await fetch(endpoint, { headers: { "mg-apikey": API_KEY } })
   const json = await res.json().catch(() => ({}))
   if (res.ok && json?.status === "Success" && Array.isArray(json?.result)) {
     return { status: "Success", type: "instagram", result: json.result as InstagramItem[] }
@@ -198,7 +184,7 @@ async function fetchInstagram(url: string): Promise<Normalized> {
 
 async function fetchYouTube(url: string): Promise<Normalized> {
   const endpoint = `${API_BASE}/api/youtube/video?url=${encodeURIComponent(url)}`
-  const res = await fetchWithTimeout(endpoint, { headers: { "mg-apikey": API_KEY as string } })
+  const res = await fetch(endpoint, { headers: { "mg-apikey": API_KEY } })
   const json = await res.json().catch(() => ({}))
   if (res.ok && json?.status === "Success" && json?.result) {
     return { status: "Success", type: "youtube", result: json.result as YouTubeResult }
@@ -217,16 +203,9 @@ async function fetchYouTube(url: string): Promise<Normalized> {
   return { status: "Error", code, message }
 }
 
-// ====== POST /api/aiodl  -> { url }  (detect platform & fetch) ======
+// ===== POST /api/aiodl  -> { url } =====
 export async function POST(req: Request) {
   try {
-    if (!API_KEY) {
-      return NextResponse.json(
-        { status: "Error", code: 500, message: "Server misconfigured: MAELYN_API_KEY is missing." },
-        { status: 500 }
-      )
-    }
-
     const body = await req.json().catch(() => null)
     const url = typeof body?.url === "string" ? body.url.trim() : ""
 
@@ -234,7 +213,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ status: "Error", code: 400, message: "Body { url } is required." }, { status: 400 })
     }
 
-    // Deteksi platform
     let out: Normalized
     if (isTikTok(url)) out = await fetchTikTok(url)
     else if (isInstagram(url)) out = await fetchInstagram(url)
@@ -245,27 +223,23 @@ export async function POST(req: Request) {
         { status: 422 }
       )
 
-    // Map status HTTP sesuai hasil
     if (out.status === "Success") return NextResponse.json(out, { status: 200 })
     const http = out.code && out.code >= 400 && out.code < 600 ? out.code : 500
     return NextResponse.json(out, { status: http })
-  } catch (err: any) {
-    const isAbort = err?.name === "AbortError"
+  } catch {
     return NextResponse.json(
-      { status: "Error", code: isAbort ? 504 : 500, message: isAbort ? "Upstream timeout." : "Server error." },
-      { status: isAbort ? 504 : 500 }
+      { status: "Error", code: 500, message: "Server error." },
+      { status: 500 }
     )
   }
 }
 
-// ====== GET /api/aiodl?proxy=1&url=...&filename=optional ======
-// (ID) Opsi proxy untuk download binary supaya lolos CORS saat fetch Blob di browser.
-// Gunakan HANYA untuk URL publik yang aman. Kita passthrough headers penting.
+// ===== GET /api/aiodl?proxy=1&url=...&filename=... =====
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const wantProxy = searchParams.get("proxy")
+
   if (!wantProxy) {
-    // kalau dipanggil tanpa ?proxy, bantu jelaskan cara pakai endpoint
     return NextResponse.json(
       {
         status: "Success",
@@ -287,7 +261,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    const upstream = await fetchWithTimeout(target, { method: "GET" }, 30000) // 30s untuk file
+    // Plain fetch (no timeout), stream back to client
+    const upstream = await fetch(target, { method: "GET", redirect: "follow" })
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json(
         { status: "Error", code: upstream.status || 502, message: `Upstream fetch failed (${upstream.status}).` },
@@ -295,14 +270,12 @@ export async function GET(req: Request) {
       )
     }
 
-    // Tentukan content-type dan filename
     const ct = upstream.headers.get("content-type") || "application/octet-stream"
     const ext =
       guessExtFromUrl(target) ||
       (ct.includes("mp4") ? "mp4" : ct.includes("jpeg") ? "jpg" : ct.includes("png") ? "png" : "bin")
     const filename = `${sanitizeFilename(filenameParam)}.${ext}`
 
-    // Build headers & stream balik
     const headers = new Headers()
     headers.set("Content-Type", ct)
     const len = upstream.headers.get("content-length")
@@ -311,11 +284,10 @@ export async function GET(req: Request) {
     headers.set("Content-Disposition", `attachment; filename="${filename}"`)
 
     return new Response(upstream.body, { status: 200, headers })
-  } catch (err: any) {
-    const isAbort = err?.name === "AbortError"
+  } catch {
     return NextResponse.json(
-      { status: "Error", code: isAbort ? 504 : 500, message: isAbort ? "Proxy timeout." : "Proxy error." },
-      { status: isAbort ? 504 : 500 }
+      { status: "Error", code: 500, message: "Proxy error." },
+      { status: 500 }
     )
   }
 }
