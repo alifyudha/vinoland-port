@@ -240,9 +240,9 @@ function Minesweeper({ onClose }: { onClose: () => void }) {
   }
 
   const getCellContent = (cell: Cell) => {
-    if (cell.state === "flagged") return <Flag className={`${isMobile ? 'h-5 w-5' : 'h-3 w-3'} text-red-500`} />
+    if (cell.state === "flagged") return <Flag className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'} text-red-500`} />
     if (cell.state === "hidden") return null
-    if (cell.isMine) return <Bomb className={`${isMobile ? 'h-5 w-5' : 'h-3 w-3'} text-red-100`} />
+    if (cell.isMine) return <Bomb className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'} text-red-100`} />
     if (cell.neighborCount === 0) return null
     return cell.neighborCount
   }
@@ -272,43 +272,20 @@ function Minesweeper({ onClose }: { onClose: () => void }) {
     return {}
   }
 
-  // Get cell size based on screen size and difficulty
-  const getCellSize = () => {
-    if (!isMobile) {
-      return "w-8 h-8 text-xs"
-    }
-    
-    // For mobile, adjust cell size based on difficulty and screen width
-    const screenWidth = window.innerWidth
-    const padding = 32 // Total horizontal padding
-    const availableWidth = screenWidth - padding
-    
-    // Calculate optimal cell size
-    const maxCellSize = Math.floor((availableWidth - (COLS - 1) * 2) / COLS)
-    
-    if (difficulty === "hard") {
-      // For hard mode, use smaller cells to fit better
-      const cellSize = Math.min(maxCellSize, 28)
-      return `w-[${cellSize}px] h-[${cellSize}px] text-[10px]`
-    } else {
-      // For easy/normal, use larger cells
-      const cellSize = Math.min(maxCellSize, 36)
-      return `w-[${cellSize}px] h-[${cellSize}px] text-sm`
-    }
-  }
-
   const cellClass = (cell: Cell, row: number, col: number) => {
     const base = [
-      getCellSize(),
+      isMobile ? "min-w-10 min-h-10" : "min-w-8 min-h-8",
+      "aspect-square",
       "border",
       "border-zinc-700/60",
+      isMobile ? "text-sm" : "text-xs",
       "font-bold",
       "flex",
       "items-center",
       "justify-center",
       "transition-all",
       "duration-150",
-      "rounded-[4px]",
+      "rounded-[6px]",
       "select-none",
       "touch-manipulation",
     ]
@@ -331,16 +308,6 @@ function Minesweeper({ onClose }: { onClose: () => void }) {
     return Object.entries(DIFFICULTY_CONFIG).filter(([_, cfg]) => 
       !isMobile || cfg.mobile
     ) as [Difficulty, typeof DIFFICULTY_CONFIG.normal][]
-  }
-
-  // Get container max width based on difficulty
-  const getContainerMaxWidth = () => {
-    if (difficulty === "expert") return "max-w-6xl"
-    if (isMobile) {
-      // Allow more space on mobile
-      return difficulty === "hard" ? "max-w-[95vw]" : "max-w-lg"
-    }
-    return "max-w-2xl"
   }
 
   if (gamePhase === "difficulty-selection") {
@@ -410,7 +377,9 @@ function Minesweeper({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <motion.div
-        className={`bg-card border border-border rounded-2xl p-3 sm:p-6 shadow-2xl w-full max-h-[95vh] overflow-auto ${getContainerMaxWidth()}`}
+        className={`bg-card border border-border rounded-2xl p-3 sm:p-6 shadow-2xl w-full max-h-[95vh] overflow-auto ${
+          difficulty === "expert" ? "max-w-6xl" : isMobile ? "max-w-sm" : "max-w-2xl"
+        }`}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -450,34 +419,33 @@ function Minesweeper({ onClose }: { onClose: () => void }) {
         </div>
 
         {board.length > 0 && (
-          <div className="flex justify-center overflow-x-auto">
-            <div
-              className={`grid bg-zinc-900 p-2 rounded-2xl border-2 border-zinc-700`}
-              style={{
-                gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gap: isMobile ? '2px' : '1px',
-                boxShadow:
-                  "inset 0 0 0 2px rgba(255,255,255,0.04), inset 6px 6px 0 rgba(0,0,0,0.45), 0 6px 0 rgba(0,0,0,0.6)",
-              }}
-            >
-              {board.map((row, rowIndex) =>
-                row.map((cell, colIndex) => (
-                  <button
-                    key={`${rowIndex}-${colIndex}`}
-                    className={cellClass(cell, rowIndex, colIndex)}
-                    style={getTileStyle(cell)}
-                    onClick={() => handleCellClick(rowIndex, colIndex)}
-                    onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
-                    onTouchStart={() => handleTouchStart(rowIndex, colIndex)}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchCancel={handleTouchEnd}
-                    disabled={gameState !== "playing"}
-                  >
-                    {getCellContent(cell)}
-                  </button>
-                )),
-              )}
-            </div>
+          <div
+            className={`grid bg-zinc-900 p-1 sm:p-2 rounded-2xl border-2 border-zinc-700 mx-auto`}
+            style={{
+              gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+              maxWidth: isMobile ? '100%' : 'fit-content',
+              gap: '1px',
+              boxShadow:
+                "inset 0 0 0 2px rgba(255,255,255,0.04), inset 6px 6px 0 rgba(0,0,0,0.45), 0 6px 0 rgba(0,0,0,0.6)",
+            }}
+          >
+            {board.map((row, rowIndex) =>
+              row.map((cell, colIndex) => (
+                <button
+                  key={`${rowIndex}-${colIndex}`}
+                  className={cellClass(cell, rowIndex, colIndex)}
+                  style={getTileStyle(cell)}
+                  onClick={() => handleCellClick(rowIndex, colIndex)}
+                  onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
+                  onTouchStart={() => handleTouchStart(rowIndex, colIndex)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
+                  disabled={gameState !== "playing"}
+                >
+                  {getCellContent(cell)}
+                </button>
+              )),
+            )}
           </div>
         )}
 
