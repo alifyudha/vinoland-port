@@ -53,7 +53,6 @@ const menuItems: MenuItem[] = [
     gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
     iconColor: "text-green-500",
   },
-  // NEW: Tools
   {
     icon: <Wrench className="h-4 w-4 sm:h-5 sm:w-5" />,
     label: "Tools",
@@ -426,7 +425,6 @@ export function MenuBar() {
   const [showLangs, setShowLangs] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
-  // NEW: modal state for AIODL
   const [openAioDl, setOpenAioDl] = useState(false)
 
   const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
@@ -514,12 +512,10 @@ export function MenuBar() {
 
       {activeTab === "Games" && <Games />}
 
-      {/* NEW: Tools tab */}
       {activeTab === "Tools" && (
         <div className="mb-6 sm:mb-8 w-full max-w-5xl">
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8 text-foreground px-4">Tools</h2>
           <div className="flex flex-wrap justify-center gap-4 px-2 sm:px-4">
-            {/* Tool Card: All-in-One Downloader */}
             <motion.button
               onClick={() => setOpenAioDl(true)}
               className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 w-full sm:w-80 lg:w-96"
@@ -535,11 +531,11 @@ export function MenuBar() {
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-semibold text-foreground">All-in-One Downloader</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Free • Download from 1k+ sources</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Free • Download from multiple sources</p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Paste a link from popular sites and fetch the media in one click.
+                  Paste a link from popular sites and download it with ease.
                 </p>
               </div>
             </motion.button>
@@ -692,7 +688,6 @@ export function MenuBar() {
               </div>
             </motion.div>
 
-            {/* Right column: Show Languages button */}
             <div className="flex flex-col items-center lg:items-start w-full lg:w-64 shrink-0">
               <motion.button
                 onClick={() => setShowLangs((v) => !v)}

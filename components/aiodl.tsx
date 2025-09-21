@@ -45,10 +45,6 @@ function formatNumber(num: number | string) {
   return n.toString()
 }
 
-/**
- * Preferred: download as Blob for custom filename.
- * Fallback: use our server proxy to bypass CORS (keeps filename + one-click download).
- */
 async function autoDownload(url: string, filenameBase: string, defaultExt = "mp4") {
   const ext = guessExtFromUrl(url, defaultExt)
   const filename = `${sanitizeFilename(filenameBase)}.${ext}`
@@ -70,7 +66,6 @@ async function autoDownload(url: string, filenameBase: string, defaultExt = "mp4
     }, 250)
     return
   } catch {
-    // Use proxy on our domain (server streams the file w/ Content-Disposition)
     const proxy = `/api/aiodl?proxy=1&url=${encodeURIComponent(url)}&filename=${encodeURIComponent(
       sanitizeFilename(filenameBase),
     )}`
@@ -78,7 +73,6 @@ async function autoDownload(url: string, filenameBase: string, defaultExt = "mp4
   }
 }
 
-// ---------- Types returned by /api/aiodl ----------
 type TikTokResult = {
   platform: string
   aweme_id: string
@@ -215,13 +209,11 @@ export function AioDl({ open, onClose }: AioDlProps) {
     exit: { opacity: 0, y: 20, scale: 0.98, transition: { duration: 0.15 } },
   }
 
-  // TikTok convenience
   const tt = data?.type === "tiktok" ? data.payload : null
   const cover =
     tt?.video?.cover || tt?.video?.origin_cover || tt?.video?.dynamic_cover || tt?.music?.cover?.thumb || undefined
   const hashtags = tt?.hashtags?.map((h) => `#${h.hashtag_name}`).join(" ")
 
-  // YouTube convenience
   const yt = data?.type === "youtube" ? data.payload : null
 
   return (
@@ -253,7 +245,7 @@ export function AioDl({ open, onClose }: AioDlProps) {
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold text-foreground">All-in-One Downloader</h3>
-                  <p className="text-xs text-muted-foreground">TikTok, Instagram & YouTube supported</p>
+                  <p className="text-xs text-muted-foreground">Loading might take a while</p>
                 </div>
               </div>
 
@@ -270,13 +262,13 @@ export function AioDl({ open, onClose }: AioDlProps) {
               {/* Input */}
               <div>
                 <label htmlFor="aiodl-url" className="text-sm font-medium text-foreground">
-                  Paste URL
+                  URL
                 </label>
                 <input
                   id="aiodl-url"
                   ref={inputRef}
                   type="url"
-                  placeholder="https://www.tiktok.com/@user/video/XXX • https://www.instagram.com/p/XXX • https://www.youtube.com/watch?v=XXX"
+                  placeholder="Your URL goes here..."
                   className="mt-2 w-full rounded-xl bg-background border border-border/60 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -303,17 +295,15 @@ export function AioDl({ open, onClose }: AioDlProps) {
                   >
                     {busy ? "Loading..." : (
                       <>
-                        <Download className="h-4 w-4" /> Get Links
+                        <Download className="h-4 w-4" /> Submit
                       </>
                     )}
                   </motion.button>
                 </div>
               )}
 
-              {/* TikTok UI */}
               {tt && (
                 <div className="space-y-5">
-                  {/* Header row */}
                   <div className="flex gap-3">
                     {cover ? (
                       <img src={cover} alt={tt.title} className="w-24 h-24 rounded-lg object-cover" />
@@ -345,7 +335,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
                     </div>
                   </div>
 
-                  {/* Download buttons */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {tt.video?.nwm_url_hq && (
                       <button
@@ -408,10 +397,8 @@ export function AioDl({ open, onClose }: AioDlProps) {
                 </div>
               )}
 
-              {/* YouTube UI */}
               {yt && (
                 <div className="space-y-5">
-                  {/* Header row */}
                   <div className="flex gap-3">
                     {yt.thumbnails?.default?.url ? (
                       <img src={yt.thumbnails.default.url} alt={yt.title} className="w-32 h-24 rounded-lg object-cover" />
@@ -455,7 +442,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
                     </div>
                   </div>
 
-                  {/* Download button */}
                   <div className="space-y-3">
                     {yt.url && (
                       <button
@@ -499,7 +485,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
                 </div>
               )}
 
-              {/* Instagram UI */}
               {data?.type === "instagram" && (
                 <div className="space-y-4">
                   <h4 className="text-sm font-semibold text-foreground">Instagram Media</h4>
@@ -523,7 +508,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
                 </div>
               )}
 
-              {/* ---- Supported Platforms Toggle (Bottom) ---- */}
               <div className="pt-2 border-t border-border/50">
                 <button
                   onClick={() => setShowPlatforms((s) => !s)}
