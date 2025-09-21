@@ -23,38 +23,7 @@ interface AioDlProps {
   onClose: () => void
 }
 
-// TODO: Move to server-side (proxy) for security
-const API_KEY = "og2uP4xcuT"
-
-
 // ---------- Utils ----------
-function isTikTok(u: string) {
-  try {
-    const url = new URL(u)
-    return /(^|\.)tiktok\.com$/i.test(url.hostname) || /(^|\.)vt\.tiktok\.com$/i.test(url.hostname)
-  } catch {
-    return /tiktok\.com|vt\.tiktok\.com/i.test(u)
-  }
-}
-
-function isInstagram(u: string) {
-  try {
-    const url = new URL(u)
-    return /(^|\.)instagram\.com$/i.test(url.hostname) || /(^|\.)instagr\.am$/i.test(url.hostname)
-  } catch {
-    return /instagram\.com|instagr\.am/i.test(u)
-  }
-}
-
-function isYouTube(u: string) {
-  try {
-    const url = new URL(u)
-    return /(^|\.)youtube\.com$/i.test(url.hostname) || /(^|\.)youtu\.be$/i.test(url.hostname) || /(^|\.)m\.youtube\.com$/i.test(url.hostname)
-  } catch {
-    return /youtube\.com|youtu\.be|m\.youtube\.com/i.test(u)
-  }
-}
-
 function sanitizeFilename(s: string, fallback = "download") {
   const base = (s || fallback).trim().replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").slice(0, 120)
   return base || fallback
@@ -71,14 +40,14 @@ function guessExtFromUrl(url: string, fallback = "mp4") {
 
 function formatNumber(num: number | string) {
   const n = typeof num === "string" ? parseInt(num) : num
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return n.toString()
 }
 
 /**
- * Try to download as Blob (preferred for custom filename).
- * Falls back to direct <a download href> if CORS blocks the fetch.
+ * Preferred: download as Blob for custom filename.
+ * Fallback: use our server proxy to bypass CORS (keeps filename + one-click download).
  */
 async function autoDownload(url: string, filenameBase: string, defaultExt = "mp4") {
   const ext = guessExtFromUrl(url, defaultExt)
@@ -101,111 +70,89 @@ async function autoDownload(url: string, filenameBase: string, defaultExt = "mp4
     }, 250)
     return
   } catch {
-    const a = document.createElement("a")
-    a.href = url
-    a.download = filename
-    a.rel = "noopener noreferrer"
-    a.target = "_blank"
-    a.style.display = "none"
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => document.body.removeChild(a), 250)
+    // Use proxy on our domain (server streams the file w/ Content-Disposition)
+    const proxy = `/api/aiodl?proxy=1&url=${encodeURIComponent(url)}&filename=${encodeURIComponent(
+      sanitizeFilename(filenameBase),
+    )}`
+    window.location.href = proxy
   }
 }
 
-// ---------- Types ----------
-type TikTokResponse = {
-  status: "Success" | "Error"
-  code: number
-  message?: string
-  result?: {
-    platform: string
-    aweme_id: string
-    title: string
-    create_time?: number
-    author?: {
-      uid: string
-      username: string
-      nickname: string
-      signature?: string
-      avatar?: { thumb?: string; medium?: string; ["300x300"]?: string }
-      region?: string
-      verified?: boolean
-    }
-    video?: {
-      nwm_url?: string
-      nwm_url_hq?: string
-      wm_url?: string
-      wm_url_hq?: string
-      cover?: string
-      origin_cover?: string
-      dynamic_cover?: string
-    }
-    image_data?: Array<{ url: string; width?: number; height?: number }>
-    music?: {
-      id: string
-      title: string
-      author: string
-      url?: string
-      cover?: { thumb?: string; medium?: string; large?: string }
-      duration?: number
-      original_sound?: boolean
-    }
-    statistics?: {
-      plays?: number
-      likes?: number
-      comments?: number
-      shares?: number
-      downloads?: number
-      collections?: number
-      reposts?: number
-    }
-    hashtags?: Array<{ hashtag_name: string }>
+// ---------- Types returned by /api/aiodl ----------
+type TikTokResult = {
+  platform: string
+  aweme_id: string
+  title: string
+  create_time?: number
+  author?: {
+    uid: string
+    username: string
+    nickname: string
+    signature?: string
+    avatar?: { thumb?: string; medium?: string; ["300x300"]?: string }
     region?: string
+    verified?: boolean
   }
-}
-
-type InstagramItem = {
-  thumbnail_link: string
-  download_link: string
-}
-
-type YouTubeResponse = {
-  status: "Success" | "Error"
-  code: number
-  message?: string
-  powered?: string
-  result?: {
-    publishedAt: string
+  video?: {
+    nwm_url?: string
+    nwm_url_hq?: string
+    wm_url?: string
+    wm_url_hq?: string
+    cover?: string
+    origin_cover?: string
+    dynamic_cover?: string
+  }
+  image_data?: Array<{ url: string; width?: number; height?: number }>
+  music?: {
+    id: string
     title: string
-    channel: string
-    channelId: string
-    description: string
-    thumbnails: {
-      default: {
-        url: string
-        width: number
-        height: number
-      }
-    }
-    duration: string
-    definition: string
-    statistics: {
-      viewCount: number
-      likeCount: number
-      favoriteCount: number
-      commentCount: number
-    }
-    expired_url: string
-    size: string
-    url: string
+    author: string
+    url?: string
+    cover?: { thumb?: string; medium?: string; large?: string }
+    duration?: number
+    original_sound?: boolean
   }
+  statistics?: {
+    plays?: number
+    likes?: number
+    comments?: number
+    shares?: number
+    downloads?: number
+    collections?: number
+    reposts?: number
+  }
+  hashtags?: Array<{ hashtag_name: string }>
+  region?: string
 }
+
+type InstagramItem = { thumbnail_link: string; download_link: string }
+
+type YouTubeResult = {
+  publishedAt: string
+  title: string
+  channel: string
+  channelId: string
+  description: string
+  thumbnails?: { default?: { url: string; width: number; height: number } }
+  duration?: string
+  definition?: string
+  statistics?: { viewCount?: number; likeCount?: number; favoriteCount?: number; commentCount?: number }
+  expired_url?: string
+  size?: string
+  url?: string
+}
+
+type ServerSuccess =
+  | { status: "Success"; type: "tiktok"; result: TikTokResult }
+  | { status: "Success"; type: "instagram"; result: InstagramItem[] }
+  | { status: "Success"; type: "youtube"; result: YouTubeResult }
+
+type ServerError = { status: "Error"; code: number; message: string }
 
 type AioData =
-  | { type: "tiktok"; payload: NonNullable<TikTokResponse["result"]> }
+  | { type: "tiktok"; payload: TikTokResult }
   | { type: "instagram"; payload: InstagramItem[] }
-  | { type: "youtube"; payload: NonNullable<YouTubeResponse["result"]> }
+  | { type: "youtube"; payload: YouTubeResult }
 
 // ---------- Component ----------
 export function AioDl({ open, onClose }: AioDlProps) {
@@ -232,63 +179,27 @@ export function AioDl({ open, onClose }: AioDlProps) {
       inputRef.current?.focus()
       return
     }
+
     setBusy(true)
     setError(null)
     setData(null)
 
     try {
-      if (isTikTok(url)) {
-        const endpoint = `https://api.maelyn.sbs/api/tiktok/download?url=${encodeURIComponent(url)}`
-        const res = await fetch(endpoint, { method: "GET", headers: { "mg-apikey": API_KEY } })
-        const json: TikTokResponse = await res.json()
+      const res = await fetch("/api/aiodl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      })
 
-        if (res.ok && json.status === "Success" && json.result) {
-          setData({ type: "tiktok", payload: json.result })
-        } else {
-          const msg =
-            json?.message ||
-            ({
-              400: "Missing/invalid parameters.",
-              403: "API key IP blocked.",
-              404: "Post not found.",
-              429: "Daily limit reached. Visit maelyn.tech/pricing.",
-              500: "Server error. Try again later.",
-            } as Record<number, string>)[json?.code || 0] ||
-            `Error ${json?.code || res.status}`
-          setError(msg)
-        }
-      } else if (isInstagram(url)) {
-        const endpoint = `https://api.maelyn.sbs/api/instagram?url=${encodeURIComponent(url)}`
-        const res = await fetch(endpoint, { method: "GET", headers: { "mg-apikey": API_KEY } })
-        const json = await res.json()
+      const json: ServerSuccess | ServerError = await res.json()
 
-        if (res.ok && json.status === "Success" && Array.isArray(json.result)) {
-          setData({ type: "instagram", payload: json.result as InstagramItem[] })
-        } else {
-          setError(json?.message || `Error ${json?.code || res.status}`)
-        }
-      } else if (isYouTube(url)) {
-        const endpoint = `https://api.maelyn.sbs/api/youtube/video?url=${encodeURIComponent(url)}`
-        const res = await fetch(endpoint, { method: "GET", headers: { "mg-apikey": API_KEY } })
-        const json: YouTubeResponse = await res.json()
-
-        if (res.ok && json.status === "Success" && json.result) {
-          setData({ type: "youtube", payload: json.result })
-        } else {
-          const msg =
-            json?.message ||
-            ({
-              400: "Missing/invalid parameters.",
-              403: "API key IP blocked.",
-              404: "Video not found.",
-              429: "Daily limit reached. Visit maelyn.tech/pricing.",
-              500: "Server error. Try again later.",
-            } as Record<number, string>)[json?.code || 0] ||
-            `Error ${json?.code || res.status}`
-          setError(msg)
-        }
+      if ("status" in json && json.status === "Success") {
+        if (json.type === "tiktok") setData({ type: "tiktok", payload: json.result })
+        else if (json.type === "instagram") setData({ type: "instagram", payload: json.result })
+        else if (json.type === "youtube") setData({ type: "youtube", payload: json.result })
       } else {
-        setError("Only TikTok, Instagram & YouTube supported now — more platforms coming soon.")
+        const message = (json as ServerError)?.message || `Error ${res.status}`
+        setError(message)
       }
     } catch {
       setError("Network error. Please try again.")
@@ -381,7 +292,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                     <ShieldCheck className="h-4 w-4" />
-                    {/* updated helper text */}
                     Paste a supported link • No account required
                   </div>
                   <motion.button
@@ -414,9 +324,7 @@ export function AioDl({ open, onClose }: AioDlProps) {
                     )}
                     <div className="min-w-0">
                       <h4 className="text-sm font-semibold text-foreground line-clamp-3">{tt.title}</h4>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {tt.platform?.toUpperCase() || "TIKTOK"}
-                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{tt.platform?.toUpperCase() || "TIKTOK"}</div>
 
                       {tt.author && (
                         <div className="mt-1 flex items-center gap-2 text-xs">
@@ -533,11 +441,7 @@ export function AioDl({ open, onClose }: AioDlProps) {
                             {formatNumber(yt.statistics.viewCount)} views
                           </div>
                         )}
-                        {yt.definition && (
-                          <div className="uppercase font-medium text-primary">
-                            {yt.definition}
-                          </div>
-                        )}
+                        {yt.definition && <div className="uppercase font-medium text-primary">{yt.definition}</div>}
                       </div>
 
                       <a
@@ -646,7 +550,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
                       transition={{ duration: 0.18 }}
                       className="overflow-hidden"
                     >
-                      {/* tighter, left-to-right row, smaller icons */}
                       <div className="flex items-center gap-3 px-2 pb-2 pt-1">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center">
@@ -674,7 +577,6 @@ export function AioDl({ open, onClose }: AioDlProps) {
 
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center">
-                            {/* YouTube kept as simple play-box look already in UI; using text label here */}
                             <img
                               src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg"
                               alt="YouTube"
