@@ -357,7 +357,7 @@ export function AioDl({ open, onClose }: AioDlProps) {
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                     <ShieldCheck className="h-4 w-4" />
-                    Secure API • No API key exposed
+                    Paste supported link • Free and no account needed
                   </div>
                   <motion.button
                     onClick={handleFetch}
