@@ -16,6 +16,7 @@ import {
   X,
   Flag,
   RotateCcw,
+  Bomb,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useRef } from "react"
@@ -699,13 +700,13 @@ export function MenuBar() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <motion.div
-              className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-full mb-4"
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 3 }}
-            >
-              <Gamepad2 className="h-8 w-8 text-green-500" />
-            </motion.div>
+          <motion.div
+            className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-full mb-4"
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 3 }}
+          >
+            <Bomb className="h-8 w-8 text-green-500" /> {}
+          </motion.div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Minesweeper</h2>
             <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
               <span className="text-sm">Click to Play</span>
@@ -738,7 +739,7 @@ export function MenuBar() {
               <span className="text-sm">Coming Soon</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              ts still coming soon too, maybe i put my bio or something idk
+              ts still coming soon, maybe i put my bio or something idk
             </p>
           </motion.div>
         </div>
