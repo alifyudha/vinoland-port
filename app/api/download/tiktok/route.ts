@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = process.env.MAELYN_API
+const API_KEY = "og2uP4xcuT"
 
 export async function GET(request: NextRequest) {
   try {
