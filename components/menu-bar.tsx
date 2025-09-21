@@ -369,26 +369,145 @@ export function MenuBar() {
       {activeTab === "Profile" && (
         <div className="mb-8 w-full max-w-md">
           <motion.div
-            className="bg-card border border-border rounded-xl p-8 text-center shadow-lg"
+            className="bg-card border border-border rounded-xl overflow-hidden shadow-lg"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <motion.div
-              className="inline-flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-full mb-4"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 2 }}
-            >
-              <User className="h-8 w-8 text-red-500" />
-            </motion.div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Profile</h2>
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm">Coming Soon</span>
+            {/* Discord banner (official, tapi harus pake hash) */}
+            <div className="h-40 relative">  {/* khusus yang ini harus di sesuaiin sendiri ya soalnya kadang kegedean 40 bisa diganti ke 24+*/}
+              <img
+                src="https://cdn.discordapp.com/banners/353484123144192000/a_9bfe2fa1f58c971fa40649197d1cb96d?size=4096"
+                alt="Discord Banner"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/20" />
             </div>
-            <p className="text-muted-foreground text-sm">
-              ts still coming soon too, maybe i put my bio or something idk
-            </p>
+
+            <div className="px-6 pb-6 relative">
+              {/* Profile picture (sama kaya banner) */}
+              <div className="relative -mt-5 mb-4 flex justify-center">
+                <motion.div
+                  className="w-20 h-20 rounded-full border-4 border-card overflow-hidden relative"
+                  animate={{ scale: [1, 1.02, 1] }}
+                  transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, repeatDelay: 1 }}
+                >
+                  <img
+                    src="https://cdn.discordapp.com/avatars/353484123144192000/ad0d414176453cdfa72e594f56bfa6a0?size=1024"
+                    alt="Discord Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                </motion.div>
+
+                {/* Online indicator */}
+                <div className="absolute bottom-0 right-1/2 translate-x-10 translate-y-1">
+                  <div className="w-6 h-6 bg-green-500 rounded-full border-4 border-card">
+                    <div className="w-full h-full bg-green-400 rounded-full animate-pulse" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Username + guild tag + badges */}
+              <div className="text-center mb-3">
+                <div className="flex items-baseline justify-center gap-2">
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-muted/40 cursor-pointer relative -top-1"
+                    aria-label="Server Tag: ORV"
+                    tabIndex={0}
+                    role="button"
+                  >
+                    <img
+                      alt=""
+                      className="badge__10651"
+                      width={14}
+                      height={14}
+                      src="https://cdn.discordapp.com/clan-badges/747807131536982068/b6f6582eb0301ce069e00b2a99323975.png?size=16"
+                    />
+                    <span className="text-xs font-semibold text-foreground">ORV</span>
+                  </span>
+
+                  {/* display name */}
+                  <h2 className="text-xl font-bold text-foreground">한수영</h2>
+                </div>
+
+                {/* username + badges inline */}
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  <p className="text-sm text-muted-foreground">vinoland</p>
+                  <div className="flex items-center gap-1">
+                    <img
+                      src="https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/gold.png"
+                      alt="Nitro Gold"
+                      className="h-4 w-4 align-middle"
+                      loading="lazy"
+                    />
+                    <img
+                      src="https://raw.githubusercontent.com/mezotv/discord-badges/d2b97b2db0d6fa5c8ac024f0d863d4458423f2bb/assets/hypesquadbalance.svg"
+                      alt="HypeSquad Balance"
+                      className="h-4 w-4 align-middle"
+                      loading="lazy"
+                    />
+                    <img
+                      src="https://raw.githubusercontent.com/mezotv/discord-badges/d2b97b2db0d6fa5c8ac024f0d863d4458423f2bb/assets/boosts/discordboost4.svg"
+                      alt="Server Booster (Level 4)"
+                      className="h-4 w-4 align-middle"
+                      loading="lazy"
+                    />
+                    <img
+                      src="https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/username.png"
+                      alt="Username History"
+                      className="h-4 w-4 align-middle"
+                      loading="lazy"
+                    />
+                    <img
+                      src="https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/quest.png"
+                      alt="Quest"
+                      className="h-4 w-4 align-middle"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div className="bg-muted/30 rounded-lg p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    className="h-3 w-3 -translate-y-0.4 shrink-0 text-zinc-900 dark:text-white [&_*]:fill-current [&_*]:stroke-current"
+                  >
+                    <rect x="3" y="5" width="2" height="2" />
+                    <rect x="3" y="11" width="2" height="2" />
+                    <rect x="3" y="17" width="2" height="2" />
+                    <rect x="7" y="5" width="14" height="2" />
+                    <rect x="7" y="11" width="14" height="2" />
+                    <rect x="7" y="17" width="14" height="2" />
+                  </svg>
+
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Known as</p>
+                    <p className="text-sm text-foreground font-medium mb-2">
+                      The First Apostle, The Fake King, Black Flames Empress, Black Flames Demon Ruler
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="bg-muted/20 rounded-lg p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <div className="text-white-500 text-lg leading-none">❛❛</div>
+
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Han Sooyoung</p>
+                    <p className="text-sm text-foreground">
+                      Tell me that I did good until now — whether I made the wrong choice or the right choice,
+                      I can reach the end of this story or not.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       )}
