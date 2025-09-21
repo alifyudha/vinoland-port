@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = "og2uP4xcuT"
+const API_KEY = process.env.MAELYN_API
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const url = searchParams.get('url')
+    const url = request.nextUrl.searchParams.get('url')
 
     if (!url) {
       return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 })
