@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
-export const runtime = "nodejs"          // Force serverless Node functions (not Edge)
-export const dynamic = "force-dynamic"   // Disable caching
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 const API = "https://api.maelyn.sbs/api"
 
@@ -18,6 +18,10 @@ function pickEndpoint(url: string) {
 
 export async function POST(req: Request) {
   const { url } = await req.json().catch(() => ({}))
+
+  console.log("📩 Incoming URL:", url)
+  console.log("🔑 MAELYN_API exists?", !!process.env.MAELYN_API)
+
   if (!url || typeof url !== "string") {
     return NextResponse.json({ status: "Error", code: 400, message: "url is required" }, { status: 400 })
   }
@@ -28,11 +32,12 @@ export async function POST(req: Request) {
   }
 
   const endpoint = pickEndpoint(url)
+  console.log("📡 Fetching:", endpoint)
+
   if (!endpoint) {
     return NextResponse.json({ status: "Error", code: 422, message: "Unsupported platform" }, { status: 422 })
   }
 
-  // Add timeout (abort after 8 seconds)
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 8000)
 
@@ -46,12 +51,9 @@ export async function POST(req: Request) {
 
     clearTimeout(timeout)
 
-    let data: any = null
-    try {
-      data = await resp.json()
-    } catch {
-      return NextResponse.json({ status: "Error", code: 502, message: "Invalid JSON from upstream" }, { status: 502 })
-    }
+    const data = await resp.json().catch(() => null)
+
+    console.log("✅ Upstream status:", resp.status)
 
     if (!resp.ok) {
       return NextResponse.json(
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
     return NextResponse.json(data, { status: 200 })
   } catch (err: any) {
     clearTimeout(timeout)
+    console.error("❌ Fetch error:", err)
     if (err?.name === "AbortError") {
       return NextResponse.json({ status: "Error", code: 504, message: "Upstream request timed out" }, { status: 504 })
     }
