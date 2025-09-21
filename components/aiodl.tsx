@@ -23,6 +23,10 @@ interface AioDlProps {
   onClose: () => void
 }
 
+// TODO: Move to server-side (proxy) for security
+const API_KEY = "og2uP4xcuT"
+
+
 // ---------- Utils ----------
 function isTikTok(u: string) {
   try {
@@ -233,37 +237,58 @@ export function AioDl({ open, onClose }: AioDlProps) {
     setData(null)
 
     try {
-      // Call your server route; it reads MAELYN_API from process.env
-      const res = await fetch("/api/aiodl", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      })
-      const json = await res.json()
+      if (isTikTok(url)) {
+        const endpoint = `https://api.maelyn.sbs/api/tiktok/download?url=${encodeURIComponent(url)}`
+        const res = await fetch(endpoint, { method: "GET", headers: { "mg-apikey": API_KEY } })
+        const json: TikTokResponse = await res.json()
 
-      if (!res.ok) {
-        setError(json?.message || `Error ${json?.code || res.status}`)
-        return
-      }
-
-      // Shape detection (works for TikTok/Instagram/YouTube payloads)
-      if (json?.status === "Success") {
-        const r = json.result
-        if (Array.isArray(r)) {
-          setData({ type: "instagram", payload: r as InstagramItem[] })
-        } else if (r && typeof r === "object") {
-          if ("aweme_id" in r || "video" in r) {
-            setData({ type: "tiktok", payload: r as NonNullable<TikTokResponse["result"]> })
-          } else if ("channel" in r || "url" in r) {
-            setData({ type: "youtube", payload: r as NonNullable<YouTubeResponse["result"]> })
-          } else {
-            setError("Unsupported response shape.")
-          }
+        if (res.ok && json.status === "Success" && json.result) {
+          setData({ type: "tiktok", payload: json.result })
         } else {
-          setError("Empty response.")
+          const msg =
+            json?.message ||
+            ({
+              400: "Missing/invalid parameters.",
+              403: "API key IP blocked.",
+              404: "Post not found.",
+              429: "Daily limit reached. Visit maelyn.tech/pricing.",
+              500: "Server error. Try again later.",
+            } as Record<number, string>)[json?.code || 0] ||
+            `Error ${json?.code || res.status}`
+          setError(msg)
+        }
+      } else if (isInstagram(url)) {
+        const endpoint = `https://api.maelyn.sbs/api/instagram?url=${encodeURIComponent(url)}`
+        const res = await fetch(endpoint, { method: "GET", headers: { "mg-apikey": API_KEY } })
+        const json = await res.json()
+
+        if (res.ok && json.status === "Success" && Array.isArray(json.result)) {
+          setData({ type: "instagram", payload: json.result as InstagramItem[] })
+        } else {
+          setError(json?.message || `Error ${json?.code || res.status}`)
+        }
+      } else if (isYouTube(url)) {
+        const endpoint = `https://api.maelyn.sbs/api/youtube/video?url=${encodeURIComponent(url)}`
+        const res = await fetch(endpoint, { method: "GET", headers: { "mg-apikey": API_KEY } })
+        const json: YouTubeResponse = await res.json()
+
+        if (res.ok && json.status === "Success" && json.result) {
+          setData({ type: "youtube", payload: json.result })
+        } else {
+          const msg =
+            json?.message ||
+            ({
+              400: "Missing/invalid parameters.",
+              403: "API key IP blocked.",
+              404: "Video not found.",
+              429: "Daily limit reached. Visit maelyn.tech/pricing.",
+              500: "Server error. Try again later.",
+            } as Record<number, string>)[json?.code || 0] ||
+            `Error ${json?.code || res.status}`
+          setError(msg)
         }
       } else {
-        setError(json?.message || "Unknown error.")
+        setError("Only TikTok, Instagram & YouTube supported now — more platforms coming soon.")
       }
     } catch {
       setError("Network error. Please try again.")
@@ -649,6 +674,7 @@ export function AioDl({ open, onClose }: AioDlProps) {
 
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center">
+                            {/* YouTube kept as simple play-box look already in UI; using text label here */}
                             <img
                               src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg"
                               alt="YouTube"
