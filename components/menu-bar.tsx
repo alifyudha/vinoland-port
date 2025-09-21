@@ -2,7 +2,20 @@
 
 import type * as React from "react"
 import { motion } from "framer-motion"
-import { Home, FolderOpen, User, ExternalLink, Clock, Music, Play, Pause, Volume2, Gamepad2 } from "lucide-react"
+import {
+  Home,
+  FolderOpen,
+  User,
+  ExternalLink,
+  Music,
+  Play,
+  Pause,
+  Volume2,
+  Gamepad2,
+  Code2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useRef } from "react"
 import { Games } from "./games"
@@ -307,6 +320,9 @@ function MusicPlayer() {
 export function MenuBar() {
   const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState("Home")
+  const [showLangs, setShowLangs] = useState(false)
+
+  const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
 
   return (
     <div className="flex flex-col items-center">
@@ -367,15 +383,15 @@ export function MenuBar() {
       {activeTab === "Games" && <Games />}
 
       {activeTab === "Profile" && (
-        <div className="mb-8 w-full max-w-md">
+        <div className="mb-8 w-full max-w-5xl flex justify-between items-start gap-6">
           <motion.div
-            className="bg-card border border-border rounded-xl overflow-hidden shadow-lg"
-            initial={{ opacity: 0, scale: 0.9 }}
+            className="bg-card border border-border rounded-xl overflow-hidden shadow-lg max-w-md"
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Discord banner (official, tapi harus pake hash) */}
-            <div className="h-40 relative">  {/* khusus yang ini harus di sesuaiin sendiri ya soalnya kadang kegedean 40 bisa diganti ke 24+*/}
+            {/* Discord banner */}
+            <div className="h-40 relative">
               <img
                 src="https://cdn.discordapp.com/banners/353484123144192000/a_9bfe2fa1f58c971fa40649197d1cb96d?size=4096"
                 alt="Discord Banner"
@@ -385,7 +401,7 @@ export function MenuBar() {
             </div>
 
             <div className="px-6 pb-6 relative">
-              {/* Profile picture (sama kaya banner) */}
+              {/* Avatar */}
               <div className="relative -mt-5 mb-4 flex justify-center">
                 <motion.div
                   className="w-20 h-20 rounded-full border-4 border-card overflow-hidden relative"
@@ -407,7 +423,7 @@ export function MenuBar() {
                 </div>
               </div>
 
-              {/* Username + guild tag + badges */}
+              {/* Username + badges */}
               <div className="text-center mb-3">
                 <div className="flex items-baseline justify-center gap-2">
                   <span
@@ -426,11 +442,9 @@ export function MenuBar() {
                     <span className="text-xs font-semibold text-foreground">ORV</span>
                   </span>
 
-                  {/* display name */}
                   <h2 className="text-xl font-bold text-foreground">한수영</h2>
                 </div>
 
-                {/* username + badges inline */}
                 <div className="flex items-center justify-center gap-2 mt-1">
                   <p className="text-sm text-muted-foreground">vinoland</p>
                   <div className="flex items-center gap-1">
@@ -497,7 +511,6 @@ export function MenuBar() {
               <div className="bg-muted/20 rounded-lg p-3 mb-4">
                 <div className="flex items-start gap-2">
                   <div className="text-white-500 text-lg leading-none">❛❛</div>
-
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Han Sooyoung</p>
                     <p className="text-sm text-foreground">
@@ -509,6 +522,48 @@ export function MenuBar() {
               </div>
             </div>
           </motion.div>
+
+          <div className="flex flex-col items-start w-64 shrink-0">
+            <motion.button
+              onClick={() => setShowLangs((v) => !v)}
+              className="w-full px-4 py-2 rounded-2xl bg-card border border-border/60 shadow-lg flex items-center justify-between hover:bg-card/90 transition-colors"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              aria-expanded={showLangs}
+              aria-controls="langs-panel"
+            >
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                <Code2 className="h-5 w-5 text-primary" />
+                {showLangs ? "Hide Languages i learn" : "Show Languages i learn"}
+              </span>
+              {showLangs ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </motion.button>
+
+            <motion.div
+              id="langs-panel"
+              initial={false}
+              animate={showLangs ? { height: "auto", opacity: 1, y: 0 } : { height: 0, opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden w-full"
+            >
+              <div className="mt-3 bg-card/80 backdrop-blur-lg border border-border/50 rounded-2xl px-4 py-3 shadow-lg">
+                <div className="flex flex-wrap gap-2">
+                  {["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Java (Android Studio)", "Kotlin (Android Studio)"].map((lang) => (
+                    <span
+                      key={lang}
+                      className="px-3 py-1.5 rounded-xl text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+                    >
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       )}
 
