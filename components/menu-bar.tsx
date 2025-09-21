@@ -671,7 +671,7 @@ export function MenuBar() {
                     {showLangs ? "Hide Languages i learn" : "Show Languages i learn"}
                   </span>
                   <span className="sm:hidden">
-                    {showLangs ? "Hide Languages" : "Show Languages"}
+                    {showLangs ? "Hide Languages" : "Show Languages i learn"}
                   </span>
                 </span>
                 {showLangs ? (
