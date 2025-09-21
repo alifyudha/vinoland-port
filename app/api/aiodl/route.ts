@@ -7,7 +7,7 @@ export const maxDuration = 60
 
 // ===== Config =====
 const API_BASE = "https://api.maelyn.sbs"
-const API_KEY = "og2uP4xcuT"
+const API_KEY = process.env.MAELYN_API
 
 // ===== Utils =====
 function isTikTok(u: string) {
