@@ -3,12 +3,11 @@ import { NextResponse } from "next/server"
 // ===== Runtime / caching =====
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
-export const maxDuration = 60 // harmless; does not enforce fetch timeout
+export const maxDuration = 60
 
 // ===== Config =====
-// Since you don't want .env, the key is hardcoded SERVER-SIDE here.
 const API_BASE = "https://api.maelyn.sbs"
-const API_KEY = "og2uP4xcuT" // <-- your Maelyn key (kept on server; not exposed to client)
+const API_KEY = "og2uP4xcuT"
 
 // ===== Utils =====
 function isTikTok(u: string) {
@@ -56,7 +55,6 @@ function guessExtFromUrl(url: string, fallback = "mp4") {
   return fallback
 }
 
-// Minimal SSRF guard for proxy
 function isSafePublicUrl(u: string) {
   let parsed: URL
   try {
@@ -148,7 +146,6 @@ type Normalized =
   | { status: "Success"; type: "youtube"; result: YouTubeResult }
   | { status: "Error"; code: number; message: string }
 
-// ===== External callers (no timeout) =====
 async function fetchTikTok(url: string): Promise<Normalized> {
   const endpoint = `${API_BASE}/api/tiktok/download?url=${encodeURIComponent(url)}`
   const res = await fetch(endpoint, { headers: { "mg-apikey": API_KEY } })
@@ -203,7 +200,6 @@ async function fetchYouTube(url: string): Promise<Normalized> {
   return { status: "Error", code, message }
 }
 
-// ===== POST /api/aiodl  -> { url } =====
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null)
@@ -234,7 +230,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ===== GET /api/aiodl?proxy=1&url=...&filename=... =====
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const wantProxy = searchParams.get("proxy")
@@ -261,7 +256,6 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Plain fetch (no timeout), stream back to client
     const upstream = await fetch(target, { method: "GET", redirect: "follow" })
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json(
