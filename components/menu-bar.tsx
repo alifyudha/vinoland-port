@@ -15,10 +15,13 @@ import {
   Code2,
   ChevronDown,
   ChevronUp,
+  Wrench,
+  Download,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useRef } from "react"
 import { Games } from "./games"
+import { AioDl } from "./aiodl"
 
 interface MenuItem {
   icon: React.ReactNode
@@ -49,6 +52,14 @@ const menuItems: MenuItem[] = [
     href: "#",
     gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
     iconColor: "text-green-500",
+  },
+  // NEW: Tools
+  {
+    icon: <Wrench className="h-4 w-4 sm:h-5 sm:w-5" />,
+    label: "Tools",
+    href: "#",
+    gradient: "radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(147,51,234,0.06) 50%, rgba(126,34,206,0) 100%)",
+    iconColor: "text-violet-500",
   },
   {
     icon: <User className="h-4 w-4 sm:h-5 sm:w-5" />,
@@ -84,7 +95,6 @@ function TypewriterEffect({ text }: { text: string }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteCount, setDeleteCount] = useState(0)
 
-  // Responsive text for mobile
   const mobileText = "❛❛Every human is their own writer.❛❛"
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 640 : false
   const currentText = isMobile ? mobileText : text
@@ -96,7 +106,6 @@ function TypewriterEffect({ text }: { text: string }) {
           if (currentIndex < currentText.length) {
             setDisplayText((p) => p + currentText[currentIndex])
             setCurrentIndex((p) => p + 1)
-
             if (currentIndex > 10 && Math.random() < 0.08) {
               setIsDeleting(true)
               setDeleteCount(0)
@@ -118,7 +127,6 @@ function TypewriterEffect({ text }: { text: string }) {
       },
       isDeleting ? 30 : 50,
     )
-
     return () => clearTimeout(timeout)
   }, [currentIndex, currentText, displayText, isDeleting, deleteCount])
 
@@ -253,7 +261,6 @@ function MusicPlayer() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 25 }}
     >
-      {/* Audio element - always mounted */}
       <audio
         ref={audioRef}
         preload="auto"
@@ -419,37 +426,30 @@ export function MenuBar() {
   const [showLangs, setShowLangs] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
+  // NEW: modal state for AIODL
+  const [openAioDl, setOpenAioDl] = useState(false)
+
   const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
 
-  // Check if we're on mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640)
     }
-    
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Control scroll behavior on mobile
   useEffect(() => {
     if (!isMobile) return
-
     const shouldEnableScroll = activeTab === "Profile" || showLangs
-    
     if (shouldEnableScroll) {
-      // Enable scrolling
       document.body.style.overflow = 'auto'
       document.documentElement.style.overflow = 'auto'
     } else {
-      // Disable scrolling
       document.body.style.overflow = 'hidden'
       document.documentElement.style.overflow = 'hidden'
     }
-
-    // Cleanup function to restore scrolling when component unmounts
     return () => {
       document.body.style.overflow = 'auto'
       document.documentElement.style.overflow = 'auto'
@@ -513,6 +513,42 @@ export function MenuBar() {
       )}
 
       {activeTab === "Games" && <Games />}
+
+      {/* NEW: Tools tab */}
+      {activeTab === "Tools" && (
+        <div className="mb-6 sm:mb-8 w-full max-w-5xl">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8 text-foreground px-4">Tools</h2>
+          <div className="flex flex-wrap justify-center gap-4 px-2 sm:px-4">
+            {/* Tool Card: All-in-One Downloader */}
+            <motion.button
+              onClick={() => setOpenAioDl(true)}
+              className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 w-full sm:w-80 lg:w-96"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Download className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold text-foreground">All-in-One Downloader</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Free • Download from 1k+ sources</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Paste a link from popular sites and fetch the media in one click.
+                </p>
+              </div>
+            </motion.button>
+          </div>
+
+          {/* Modal mount point */}
+          <AioDl open={openAioDl} onClose={() => setOpenAioDl(false)} />
+        </div>
+      )}
 
       {activeTab === "Profile" && (
         <div className="mb-6 sm:mb-8 w-full max-w-5xl">
@@ -656,6 +692,7 @@ export function MenuBar() {
               </div>
             </motion.div>
 
+            {/* Right column: Show Languages button */}
             <div className="flex flex-col items-center lg:items-start w-full lg:w-64 shrink-0">
               <motion.button
                 onClick={() => setShowLangs((v) => !v)}
