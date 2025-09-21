@@ -417,8 +417,44 @@ export function MenuBar() {
   const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState("Home")
   const [showLangs, setShowLangs] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
+
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Control scroll behavior on mobile
+  useEffect(() => {
+    if (!isMobile) return
+
+    const shouldEnableScroll = activeTab === "Profile" || showLangs
+    
+    if (shouldEnableScroll) {
+      // Enable scrolling
+      document.body.style.overflow = 'auto'
+      document.documentElement.style.overflow = 'auto'
+    } else {
+      // Disable scrolling
+      document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
+    }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'auto'
+      document.documentElement.style.overflow = 'auto'
+    }
+  }, [activeTab, showLangs, isMobile])
 
   return (
     <div className="flex flex-col items-center px-4 pb-24 sm:pb-8">
