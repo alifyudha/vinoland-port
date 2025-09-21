@@ -59,6 +59,47 @@ const menuItems: MenuItem[] = [
   },
 ]
 
+function ThemeToggler() {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  return (
+    <motion.button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-12 h-12 bg-card/90 backdrop-blur-lg border border-border/40 rounded-full shadow-xl flex items-center justify-center"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {theme === "dark" ? (
+        <motion.div
+          initial={{ rotate: -90, opacity: 0 }}
+          animate={{ rotate: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          ☀️
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ rotate: 90, opacity: 0 }}
+          animate={{ rotate: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          🌙
+        </motion.div>
+      )}
+    </motion.button>
+  )
+}
+
 const tabVariants = {
   initial: { scale: 1 },
   hover: {
@@ -130,9 +171,11 @@ function TypewriterEffect({ text }: { text: string }) {
   }, [currentText])
 
   return (
-    <div className="text-lg sm:text-xl md:text-2xl font-medium text-foreground mb-6 sm:mb-8 min-h-[2rem] sm:min-h-[2.5rem] flex items-center justify-center text-center px-4">
-      {displayText}
-      <span className="animate-pulse ml-1 text-primary">|</span>
+    <div className="text-lg sm:text-xl md:text-2xl font-medium text-foreground mb-6 sm:mb-8 min-h-[2rem] sm:min-h-[2.5rem] flex items-center justify-center text-center px-4 w-full">
+      <div className="flex items-center justify-center">
+        {displayText}
+        <span className="animate-pulse ml-1 text-primary">|</span>
+      </div>
     </div>
   )
 }
@@ -420,8 +463,38 @@ export function MenuBar() {
 
   const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
 
+  // Prevent scrolling on mobile, except when on Profile page with languages shown
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768
+    if (isMobile) {
+      // Allow scrolling on Profile page when languages are shown
+      const shouldAllowScroll = activeTab === "Profile" && showLangs
+      
+      if (!shouldAllowScroll) {
+        // Prevent scrolling
+        document.body.style.overflow = 'hidden'
+        document.body.style.touchAction = 'none'
+        document.documentElement.style.overflow = 'hidden'
+      } else {
+        // Allow scrolling
+        document.body.style.overflow = 'auto'
+        document.body.style.touchAction = 'auto'
+        document.documentElement.style.overflow = 'auto'
+      }
+      
+      return () => {
+        // Restore scrolling when component unmounts
+        document.body.style.overflow = ''
+        document.body.style.touchAction = ''
+        document.documentElement.style.overflow = ''
+      }
+    }
+  }, [activeTab, showLangs])
+
   return (
-    <div className="flex flex-col items-center px-4 pb-24 sm:pb-8">
+    <div className={`h-screen sm:h-auto flex flex-col items-center px-4 pb-24 sm:pb-8 sm:overflow-auto ${
+      activeTab === "Profile" && showLangs ? 'overflow-auto touch-auto' : 'overflow-hidden touch-none'
+    } sm:touch-auto`}>
       {activeTab === "Home" && (
         <div className="mb-6 sm:mb-8 w-full">
           <TypewriterEffect text="❛❛Ultimately, every human is their own writer.❛❛" />
