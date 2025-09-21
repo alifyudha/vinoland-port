@@ -465,8 +465,8 @@ export function MenuBar() {
       )}
 
       {activeTab === "Project" && (
-        <div className="mb-6 sm:mb-8 w-full max-w-5xl">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-foreground px-4">My Projects</h2>
+        <div className="mb-6 sm:mb-8 w-full max-w-5xl -mt-4 sm:mt-0">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8 text-foreground px-4">My Projects</h2>
           <div className="flex justify-center px-4">
             {projects.map((project) => (
               <motion.div
