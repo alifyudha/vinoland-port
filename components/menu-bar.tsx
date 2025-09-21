@@ -2,7 +2,21 @@
 
 import type * as React from "react"
 import { motion } from "framer-motion"
-import { Home, FolderOpen, Gamepad2, User, ExternalLink, Clock, Music, Play, Pause, Volume2 } from "lucide-react"
+import {
+  Home,
+  FolderOpen,
+  Gamepad2,
+  User,
+  ExternalLink,
+  Clock,
+  Music,
+  Play,
+  Pause,
+  Volume2,
+  X,
+  Flag,
+  RotateCcw,
+} from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useRef } from "react"
 
@@ -19,28 +33,32 @@ const menuItems: MenuItem[] = [
     icon: <Home className="h-5 w-5" />,
     label: "Home",
     href: "#",
-    gradient: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
+    gradient:
+      "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
     iconColor: "text-blue-500",
   },
   {
     icon: <FolderOpen className="h-5 w-5" />,
     label: "Project",
     href: "#",
-    gradient: "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
+    gradient:
+      "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
     iconColor: "text-orange-500",
   },
   {
     icon: <Gamepad2 className="h-5 w-5" />,
     label: "Games",
     href: "#",
-    gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
+    gradient:
+      "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
     iconColor: "text-green-500",
   },
   {
     icon: <User className="h-5 w-5" />,
     label: "Profile",
     href: "#",
-    gradient: "radial-gradient(circle, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.06) 50%, rgba(185,28,28,0) 100%)",
+    gradient:
+      "radial-gradient(circle, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.06) 50%, rgba(185,28,28,0) 100%)",
     iconColor: "text-red-500",
   },
 ]
@@ -49,11 +67,7 @@ const tabVariants = {
   initial: { scale: 1 },
   hover: {
     scale: 1.1,
-    transition: {
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 20,
-    },
+    transition: { type: "spring" as const, stiffness: 300, damping: 20 },
   },
 }
 
@@ -75,35 +89,33 @@ function TypewriterEffect({ text }: { text: string }) {
   const [deleteCount, setDeleteCount] = useState(0)
 
   useEffect(() => {
-    const timeout = setTimeout(
-      () => {
-        if (!isDeleting) {
-          if (currentIndex < text.length) {
-            setDisplayText((prev) => prev + text[currentIndex])
-            setCurrentIndex((prev) => prev + 1)
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (currentIndex < text.length) {
+          setDisplayText((p) => p + text[currentIndex])
+          setCurrentIndex((p) => p + 1)
 
-            if (currentIndex > 10 && Math.random() < 0.08) {
-              setIsDeleting(true)
-              setDeleteCount(0)
-            }
-          }
-        } else {
-          const protectedChars = ["❛", "."]
-          const canDelete =
-            displayText.length > 0 && deleteCount < 2 && !protectedChars.includes(displayText[displayText.length - 1])
-
-          if (canDelete) {
-            setDisplayText((prev) => prev.slice(0, -1))
-            setCurrentIndex((prev) => prev - 1)
-            setDeleteCount((prev) => prev + 1)
-          } else {
-            setIsDeleting(false)
+          if (currentIndex > 10 && Math.random() < 0.08) {
+            setIsDeleting(true)
             setDeleteCount(0)
           }
         }
-      },
-      isDeleting ? 30 : 50,
-    )
+      } else {
+        const protectedChars = ["❛", "."]
+        const canDelete =
+          displayText.length > 0 &&
+          deleteCount < 2 &&
+          !protectedChars.includes(displayText[displayText.length - 1])
+        if (canDelete) {
+          setDisplayText((p) => p.slice(0, -1))
+          setCurrentIndex((p) => p - 1)
+          setDeleteCount((p) => p + 1)
+        } else {
+          setIsDeleting(false)
+          setDeleteCount(0)
+        }
+      }
+    }, isDeleting ? 30 : 50)
 
     return () => clearTimeout(timeout)
   }, [currentIndex, text, displayText, isDeleting, deleteCount])
@@ -131,30 +143,24 @@ function MusicPlayer() {
   const rafRef = useRef<number | null>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Normalize and set duration safely
   const updateDuration = () => {
     const a = audioRef.current
     if (!a) return
     let d = a.duration
-    // Some browsers give Infinity/NaN until buffered; fallback to seekable
     if (!Number.isFinite(d) || d <= 0) {
       try {
         if (a.seekable && a.seekable.length > 0) {
           d = a.seekable.end(a.seekable.length - 1)
         }
-      } catch (_) {
-        /* noop */
-      }
+      } catch {}
     }
     if (Number.isFinite(d) && d > 0) setDuration(d)
   }
 
-  // Smooth currentTime updates while playing (avoids throttled timeupdate)
   const tick = () => {
     const a = audioRef.current
     if (a) {
       setCurrentTime(a.currentTime)
-      // if duration was late, keep trying to lock it in
       if (duration === 0) updateDuration()
     }
     rafRef.current = requestAnimationFrame(tick)
@@ -173,14 +179,10 @@ function MusicPlayer() {
   const togglePlay = () => {
     const a = audioRef.current
     if (!a) return
-    if (isPlaying) {
-      a.pause()
-    } else {
-      a.play().catch(() => {}) // ignore gesture/autoplay errors
-    }
+    if (isPlaying) a.pause()
+    else a.play().catch(() => {})
   }
 
-  // Event handlers
   const handleLoadedMetadata = () => {
     const a = audioRef.current
     if (!a) return
@@ -206,13 +208,12 @@ function MusicPlayer() {
     stopRaf()
   }
 
-  // Keep element volume in sync if changed elsewhere
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
 
   useEffect(() => {
-    return () => stopRaf() // cleanup on unmount
+    return () => stopRaf()
   }, [])
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -299,6 +300,7 @@ function MusicPlayer() {
             transition={{ duration: 0.1 }}
           />
         </div>
+
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
@@ -318,12 +320,317 @@ function MusicPlayer() {
   )
 }
 
+type CellState = "hidden" | "revealed" | "flagged"
+type GameState = "playing" | "won" | "lost"
+
+interface Cell {
+  isMine: boolean
+  neighborCount: number
+  state: CellState
+}
+
+function Minesweeper({ onClose }: { onClose: () => void }) {
+  const [board, setBoard] = useState<Cell[][]>([])
+  const [gameState, setGameState] = useState<GameState>("playing")
+  const [flagCount, setFlagCount] = useState(0)
+  const [firstClick, setFirstClick] = useState(true)
+
+  const ROWS = 9
+  const COLS = 9
+  const MINES = 10
+
+  const NUMBER_COLORS: Record<number, string> = {
+    1: "text-sky-400",
+    2: "text-emerald-400",
+    3: "text-rose-400",
+    4: "text-indigo-400",
+    5: "text-amber-400",
+    6: "text-teal-300",
+    7: "text-fuchsia-400",
+    8: "text-zinc-400",
+  }
+
+  const initializeBoard = (firstClickRow?: number, firstClickCol?: number) => {
+    const newBoard: Cell[][] = Array(ROWS)
+      .fill(null)
+      .map(() =>
+        Array(COLS)
+          .fill(null)
+          .map(() => ({ isMine: false, neighborCount: 0, state: "hidden" as CellState })),
+      )
+
+    // fungsi naruh bom (random)
+    let minesPlaced = 0
+    while (minesPlaced < MINES) {
+      const row = Math.floor(Math.random() * ROWS)
+      const col = Math.floor(Math.random() * COLS)
+      if (!newBoard[row][col].isMine && !(firstClickRow === row && firstClickCol === col)) {
+        newBoard[row][col].isMine = true
+        minesPlaced++
+      }
+    }
+
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        if (!newBoard[row][col].isMine) {
+          let count = 0
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              const newRow = row + dr
+              const newCol = col + dc
+              if (newRow >= 0 && newRow < ROWS && newCol >= 0 && newCol < COLS) {
+                if (newBoard[newRow][newCol].isMine) count++
+              }
+            }
+          }
+          newBoard[row][col].neighborCount = count
+        }
+      }
+    }
+
+    return newBoard
+  }
+
+  const resetGame = () => {
+    setBoard(initializeBoard())
+    setGameState("playing")
+    setFlagCount(0)
+    setFirstClick(true)
+  }
+
+  useEffect(() => {
+    resetGame()
+  }, [])
+
+  const revealCell = (row: number, col: number) => {
+    if (gameState !== "playing") return
+
+    let newBoard = [...board]
+
+    if (firstClick) {
+      newBoard = initializeBoard(row, col)
+      setFirstClick(false)
+    }
+    if (newBoard[row][col].state !== "hidden") return
+
+    newBoard[row][col].state = "revealed"
+
+    if (newBoard[row][col].isMine) {
+      // fungsi reveal bomb
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (newBoard[r][c].isMine) newBoard[r][c].state = "revealed"
+        }
+      }
+      setGameState("lost")
+    } else if (newBoard[row][col].neighborCount === 0) {
+      const queue = [[row, col]] as Array<[number, number]>
+      while (queue.length > 0) {
+        const [cr, cc] = queue.shift()!
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = cr + dr
+            const nc = cc + dc
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+              if (newBoard[nr][nc].state === "hidden" && !newBoard[nr][nc].isMine) {
+                newBoard[nr][nc].state = "revealed"
+                if (newBoard[nr][nc].neighborCount === 0) queue.push([nr, nc])
+              }
+            }
+          }
+        }
+      }
+    }
+
+    setBoard(newBoard)
+
+    // win check
+    let hiddenCount = 0
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (newBoard[r][c].state === "hidden" && !newBoard[r][c].isMine) hiddenCount++
+      }
+    }
+    if (hiddenCount === 0) setGameState("won")
+  }
+
+  const toggleFlag = (e: React.MouseEvent, row: number, col: number) => {
+    e.preventDefault()
+    if (gameState !== "playing" || board[row][col].state === "revealed") return
+
+    const newBoard = [...board]
+    if (newBoard[row][col].state === "flagged") {
+      newBoard[row][col].state = "hidden"
+      setFlagCount((p) => p - 1)
+    } else if (newBoard[row][col].state === "hidden") {
+      newBoard[row][col].state = "flagged"
+      setFlagCount((p) => p + 1)
+    }
+    setBoard(newBoard)
+  }
+
+  const getCellContent = (cell: Cell) => {
+    if (cell.state === "flagged") return <Flag className="h-3 w-3 text-red-500" />
+    if (cell.state === "hidden") return null
+    if (cell.isMine) return null // no 💣
+    if (cell.neighborCount === 0) return null
+    return cell.neighborCount
+  }
+
+  const getCellColor = (cell: Cell, row: number, col: number) => {
+    if (cell.state === "hidden") {
+      const alt = (row + col) % 2 === 0
+      return `${alt ? "bg-zinc-800" : "bg-zinc-900"} hover:bg-zinc-800/90`
+    }
+    if (cell.state === "flagged") return "bg-red-100 dark:bg-red-900/30"
+    if (cell.isMine) return "bg-rose-700"
+    return "bg-zinc-950"
+  }
+
+  const getNumberColor = (count: number) => NUMBER_COLORS[count] || "text-zinc-300"
+
+  const getTightBorders = (row: number, col: number, cell: Cell) => {
+    if (!(cell.state === "revealed" && !cell.isMine)) return ""
+    const isInside = (r: number, c: number) => r >= 0 && r < ROWS && c >= 0 && c < COLS
+    const isOpen = (r: number, c: number) =>
+      isInside(r, c) && board[r][c].state === "revealed" && !board[r][c].isMine
+
+    const parts: string[] = []
+    if (isOpen(row, col - 1)) parts.push("border-l-0")
+    if (isOpen(row, col + 1)) parts.push("border-r-0")
+    if (isOpen(row - 1, col)) parts.push("border-t-0")
+    if (isOpen(row + 1, col)) parts.push("border-b-0")
+    return parts.join(" ")
+  }
+
+  const getTileStyle = (cell: Cell): React.CSSProperties => {
+    if (cell.state === "hidden" || cell.state === "flagged") {
+      return {
+        boxShadow:
+          "inset 1px 1px 0 rgba(255,255,255,0.06), inset -2px -2px 0 rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.5)",
+      }
+    }
+    if (cell.state === "revealed" && !cell.isMine) {
+      return { boxShadow: "inset 2px 2px 4px rgba(0,0,0,0.65)" }
+    }
+    return {}
+  }
+
+  const cellClass = (cell: Cell, row: number, col: number) => {
+    const base = [
+      "min-w-8",
+      "min-h-8",
+      "aspect-square",
+      "border",
+      "border-zinc-700/60",
+      "text-xs",
+      "font-bold",
+      "flex",
+      "items-center",
+      "justify-center",
+      "transition-all",
+      "duration-150",
+      "rounded-[6px]",
+      "select-none",
+    ]
+
+    base.push(getCellColor(cell, row, col))
+
+    if (cell.state === "hidden") {
+      base.push("hover:shadow-md")
+    }
+
+    if (cell.state === "revealed" && !cell.isMine) {
+      base.push(getTightBorders(row, col, cell))
+      base.push("border-transparent")
+      base.push(getNumberColor(cell.neighborCount))
+    }
+
+    if (col === 0 && !(cell.state === "revealed" && !cell.isMine)) base.push("border-l")
+    if (row === 0 && !(cell.state === "revealed" && !cell.isMine)) base.push("border-t")
+
+    return base.join(" ")
+  }
+
+  return (
+    <motion.div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-card border border-border rounded-2xl p-6 shadow-2xl max-w-md w-full"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Bomb</span>
+              <span className="text-sm font-mono">{MINES}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Flag</span>
+              <span className="text-sm font-mono">{flagCount}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={resetGame}
+            className="flex items-center gap-1 px-3 py-1 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reset
+          </button>
+        </div>
+
+        <div
+          className="grid grid-cols-9 bg-zinc-900 p-2 rounded-2xl border-2 border-zinc-700"
+          style={{
+            boxShadow:
+              "inset 0 0 0 2px rgba(255,255,255,0.04), inset 6px 6px 0 rgba(0,0,0,0.45), 0 6px 0 rgba(0,0,0,0.6)",
+          }}
+        >
+          {board.map((row, rowIndex) =>
+            row.map((cell, colIndex) => (
+              <button
+                key={`${rowIndex}-${colIndex}`}
+                className={cellClass(cell, rowIndex, colIndex)}
+                style={getTileStyle(cell)}
+                onClick={() => revealCell(rowIndex, colIndex)}
+                onContextMenu={(e) => toggleFlag(e, rowIndex, colIndex)}
+                disabled={gameState !== "playing"}
+              >
+                {getCellContent(cell)}
+              </button>
+            )),
+          )}
+        </div>
+
+        {gameState !== "playing" && (
+          <div className="mt-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              {gameState === "won" ? "Congratulations! You won!" : "Game Over! Try again!"}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-4 text-xs text-muted-foreground text-center">
+          Left click to reveal • Right click to flag
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
 
 export function MenuBar() {
   const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState("Home")
-
-  const isDarkTheme = theme === "dark"
+  const [showMinesweeper, setShowMinesweeper] = useState(false)
 
   return (
     <div className="flex flex-col items-center">
@@ -384,10 +691,13 @@ export function MenuBar() {
       {activeTab === "Games" && (
         <div className="mb-8 w-full max-w-md">
           <motion.div
-            className="bg-card border border-border rounded-xl p-8 text-center shadow-lg"
+            className="bg-card border border-border rounded-xl p-8 text-center shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
+            onClick={() => setShowMinesweeper(true)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             <motion.div
               className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-full mb-4"
@@ -396,13 +706,12 @@ export function MenuBar() {
             >
               <Gamepad2 className="h-8 w-8 text-green-500" />
             </motion.div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Games</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Minesweeper</h2>
             <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm">Coming Soon</span>
+              <span className="text-sm">Click to Play</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              This gonna be a random game i made or ts tab could be nothing so..
+              Just a classic minesweeper game.
             </p>
           </motion.div>
         </div>
@@ -437,7 +746,7 @@ export function MenuBar() {
 
       <motion.nav className="p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden">
         <ul className="flex items-center gap-2 relative z-10">
-          {menuItems.map((item, index) => (
+          {menuItems.map((item) => (
             <motion.li key={item.label} className="relative">
               <motion.a
                 href={item.href}
@@ -469,6 +778,8 @@ export function MenuBar() {
       </motion.nav>
 
       <MusicPlayer />
+
+      {showMinesweeper && <Minesweeper onClose={() => setShowMinesweeper(false)} />}
     </div>
   )
 }
