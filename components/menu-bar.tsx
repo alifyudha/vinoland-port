@@ -17,11 +17,14 @@ import {
   ChevronUp,
   Wrench,
   Download,
+  Search,
+  Shuffle,
 } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Games } from "./games"
 import { AioDl } from "./aiodl"
+import { RandomPicker } from "./randompicker"
 
 interface MenuItem {
   icon: React.ReactNode
@@ -426,6 +429,9 @@ export function MenuBar() {
   const [isMobile, setIsMobile] = useState(false)
 
   const [openAioDl, setOpenAioDl] = useState(false)
+  const [openRandomPicker, setOpenRandomPicker] = useState(false)
+
+  const [toolsQuery, setToolsQuery] = useState("")
 
   const LANGS = ["C#", "C++", "Lua", "Python", "Javascript (NodeJS)", "Typescript"]
 
@@ -453,6 +459,39 @@ export function MenuBar() {
       document.documentElement.style.overflow = 'auto'
     }
   }, [activeTab, showLangs, isMobile])
+
+  // ---------- Tools catalog (easy to extend later) ----------
+  const tools = useMemo(() => ([
+    {
+      id: "aiodl",
+      title: "All-in-One Downloader",
+      subtitle: "Utility • Download from multiple sources",
+      description: "Paste a link from popular sites and download it with ease.",
+      icon: <Download className="h-5 w-5 text-primary" />,
+      onOpen: () => setOpenAioDl(true),
+      keywords: "downloader download video audio tiktok instagram aio",
+    },
+    {
+      id: "random-picker",
+      title: "Random Picker",
+      subtitle: "Utility • Fair random selection",
+      description: "Add names/items and pick one randomly — useful for a giveaway stuff.",
+      icon: <Shuffle className="h-5 w-5 text-primary" />,
+      onOpen: () => setOpenRandomPicker(true),
+      keywords: "random picker wheel raffle choose names items shuffle",
+    },
+  ]), [])
+
+  const filteredTools = useMemo(() => {
+    const q = toolsQuery.trim().toLowerCase()
+    if (!q) return tools
+    return tools.filter(t =>
+      t.title.toLowerCase().includes(q) ||
+      t.subtitle.toLowerCase().includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      t.keywords.includes(q)
+    )
+  }, [toolsQuery, tools])
 
   return (
     <div className="flex flex-col items-center px-4 pb-24 sm:pb-8">
@@ -514,35 +553,59 @@ export function MenuBar() {
 
       {activeTab === "Tools" && (
         <div className="mb-6 sm:mb-8 w-full max-w-5xl">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8 text-foreground px-4">Tools</h2>
-          <div className="flex flex-wrap justify-center gap-4 px-2 sm:px-4">
-            <motion.button
-              onClick={() => setOpenAioDl(true)}
-              className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 w-full sm:w-80 lg:w-96"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Download className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-semibold text-foreground">All-in-One Downloader</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Free • Download from multiple sources</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Paste a link from popular sites and download it with ease.
-                </p>
-              </div>
-            </motion.button>
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3 sm:mb-6 text-foreground px-4">Tools</h2>
+
+          {/* Search bar */}
+          <div className="mx-auto mb-4 sm:mb-6 px-2 sm:px-4">
+            <div className="max-w-xl mx-auto relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={toolsQuery}
+                onChange={(e) => setToolsQuery(e.target.value)}
+                placeholder="Search tools (e.g., downloader, random)..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-card border border-border/60 outline-none focus:ring-2 focus:ring-primary/40 transition"
+                aria-label="Search tools"
+              />
+            </div>
           </div>
 
-          {/* Modal mount point */}
+          {/* Tool cards */}
+          <div className="flex flex-wrap justify-center gap-4 px-2 sm:px-4">
+            {filteredTools.length === 0 && (
+              <div className="text-sm text-muted-foreground px-4 py-6">No tools match your search.</div>
+            )}
+
+            {filteredTools.map((tool, idx) => (
+              <motion.button
+                key={tool.id}
+                onClick={tool.onOpen}
+                className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 w-full sm:w-80 lg:w-96"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: idx * 0.05 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                aria-label={tool.title}
+              >
+                <div className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      {tool.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-semibold text-foreground">{tool.title}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{tool.subtitle}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{tool.description}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Modals mount */}
           <AioDl open={openAioDl} onClose={() => setOpenAioDl(false)} />
+          <RandomPicker open={openRandomPicker} onClose={() => setOpenRandomPicker(false)} />
         </div>
       )}
 
