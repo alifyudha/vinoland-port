@@ -203,7 +203,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
           {/* Modal */}
           <motion.div
             className={`relative z-10 w-full bg-card border border-border/60 rounded-2xl shadow-2xl overflow-hidden ${
-              isMobile ? 'max-w-sm h-[90vh] max-h-[90vh]' : 'max-w-6xl max-h-[90vh]'
+              isMobile ? 'max-w-sm h-[80vh] max-h-[80vh]' : 'max-w-6xl max-h-[90vh]'
             }`}
             initial={{ y: 30, scale: 0.98, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
@@ -212,7 +212,10 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
             role="dialog"
             aria-modal="true"
             aria-label="AL Quran Indonesia"
-            style={{ touchAction: 'auto' }}
+            style={{ 
+              touchAction: 'auto',
+              paddingBottom: 'env(safe-area-inset-bottom)'
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-border/60">
@@ -385,12 +388,13 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                     {/* Verses list */}
                     <div 
                       ref={listRef} 
-                      className={`overflow-auto px-3 sm:px-4 pb-4 sm:pb-6 flex-1 min-h-0 ${
+                      className={`overflow-auto px-3 sm:px-4 flex-1 min-h-0 ${
                         isMobile ? '' : 'h-[20rem] sm:h-[24rem]'
                       }`}
                       style={{ 
                         WebkitOverflowScrolling: 'touch',
-                        touchAction: 'pan-y'
+                        touchAction: 'pan-y',
+                        paddingBottom: isMobile ? '4rem' : '1.5rem'
                       }}
                     >
                       {loadingSurah && (
@@ -402,10 +406,12 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                           {errorSurah}
                         </div>
                       )}
-                      {!loadingSurah && !errorSurah && filteredAyah?.map(v => (
+                      {!loadingSurah && !errorSurah && filteredAyah?.map((v, index) => (
                         <div
                           key={v.nomor}
-                          className="mb-4 rounded-xl border border-border/60 p-3 bg-card"
+                          className={`mb-4 rounded-xl border border-border/60 p-3 bg-card ${
+                            index === filteredAyah.length - 1 && isMobile ? 'mb-8' : ''
+                          }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="text-xs font-medium text-muted-foreground pt-1">
