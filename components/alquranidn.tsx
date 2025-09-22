@@ -68,7 +68,16 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
 
   const [showTranslit, setShowTranslit] = React.useState(false)
   const [ayahQuery, setAyahQuery] = React.useState("")
+  const [isMobile, setIsMobile] = React.useState(false)
   const listRef = React.useRef<HTMLDivElement>(null)
+
+  // Check if mobile
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Fetch ALL data once on open (from offline JSON)
   React.useEffect(() => {
@@ -177,7 +186,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -193,7 +202,9 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
 
           {/* Modal */}
           <motion.div
-            className="relative z-10 w-full max-w-6xl bg-card border border-border/60 rounded-2xl shadow-2xl overflow-hidden"
+            className={`relative z-10 w-full bg-card border border-border/60 rounded-2xl shadow-2xl overflow-hidden ${
+              isMobile ? 'max-w-sm h-[90vh] max-h-[90vh]' : 'max-w-6xl max-h-[90vh]'
+            }`}
             initial={{ y: 30, scale: 0.98, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
             exit={{ y: 30, scale: 0.98, opacity: 0 }}
@@ -201,23 +212,24 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
             role="dialog"
             aria-modal="true"
             aria-label="AL Quran Indonesia"
+            style={{ touchAction: 'auto' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-border/60">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground leading-none">AL Quran Indonesia</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground leading-none">AL Quran Indonesia</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
                     Baca per surat/ayat + terjemahan Indonesia & audio
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-muted/50 transition-colors"
+                className="p-2 rounded-xl hover:bg-muted/50 transition-colors touch-manipulation"
                 aria-label="Close"
               >
                 <X className="h-5 w-5 text-muted-foreground" />
@@ -225,23 +237,29 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
             </div>
 
             {/* Body */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+            <div className={`${isMobile ? 'flex flex-col h-full' : 'grid grid-cols-1 lg:grid-cols-3'} gap-0`}>
               {/* Left: Surah list */}
-              <div className="lg:border-r border-border/60">
-                <div className="p-4">
+              <div className={`${isMobile ? (activeSurah ? 'hidden' : 'flex flex-col min-h-0') : ''} lg:border-r border-border/60`}>
+                <div className="p-3 sm:p-4 flex-shrink-0">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       value={surahQuery}
                       onChange={(e) => setSurahQuery(e.target.value)}
-                      placeholder="Cari surat (nama/asma/arti/nomor)…"
+                      placeholder={isMobile ? "Cari surat…" : "Cari surat (nama/asma/arti/nomor)…"}
                       className="w-full pl-9 pr-3 py-2 rounded-xl bg-card border border-border/60 outline-none focus:ring-2 focus:ring-primary/40 transition text-sm"
                       aria-label="Cari surat"
                     />
                   </div>
                 </div>
 
-                <div className="h-[28rem] overflow-auto px-2 pb-2">
+                <div 
+                  className={`overflow-auto px-2 pb-2 flex-1 min-h-0 ${isMobile ? '' : 'h-[28rem] sm:h-[32rem]'}`}
+                  style={{ 
+                    WebkitOverflowScrolling: 'touch',
+                    touchAction: 'pan-y'
+                  }}
+                >
                   {loadingList && (
                     <div className="px-4 py-6 text-sm text-muted-foreground">Memuat daftar surat…</div>
                   )}
@@ -257,7 +275,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                       <button
                         key={s.nomor}
                         onClick={() => loadSurah(s)}
-                        className={`w-full text-left px-3 py-2 rounded-xl mb-1 border transition
+                        className={`w-full text-left px-3 py-2.5 sm:py-2 rounded-xl mb-1 border transition touch-manipulation
                           ${isActive ? "bg-primary/10 border-primary/30" : "bg-card border-border/60 hover:bg-muted/50"}`}
                       >
                         <div className="flex items-center justify-between">
@@ -277,15 +295,29 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                 </div>
               </div>
 
-              {/* Right: Verses (2/3 width) */}
-              <div className="lg:col-span-2">
+              {/* Right: Verses */}
+              <div className={`${isMobile ? (activeSurah ? 'flex flex-col min-h-0 flex-1' : 'hidden') : 'lg:col-span-2'}`}>
                 {activeSurah ? (
                   <>
+                    {/* Mobile back button */}
+                    {isMobile && (
+                      <div className="p-3 border-b border-border/60 flex-shrink-0">
+                        <button
+                          onClick={() => setActiveSurah(null)}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition touch-manipulation"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Kembali ke daftar surat
+                        </button>
+                      </div>
+                    )}
+
                     {/* Surah header */}
-                    <div className="p-4 border-b border-border/60 flex flex-wrap items-center gap-3">
-                      <div className="flex-1 min-w-[12rem]">
+                    <div className="p-3 sm:p-4 border-b border-border/60 flex-shrink-0">
+                      <div className="mb-3">
                         <div className="text-base font-semibold text-foreground">
-                          {activeSurah.nomor}. {activeSurah.nama} <span className="text-sm text-muted-foreground">({activeSurah.asma})</span>
+                          {activeSurah.nomor}. {activeSurah.nama} 
+                          <span className="text-sm text-muted-foreground ml-2">({activeSurah.asma})</span>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {activeSurah.arti} • {activeSurah.ayat.length} ayat • {activeSurah.type}
@@ -293,51 +325,57 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                       </div>
 
                       {/* Audio */}
-                      <div className="flex items-center gap-2 min-w-[14rem]">
-                        <Volume2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Volume2 className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Audio Murottal</span>
+                        </div>
                         <audio
                           controls
                           preload="none"
-                          className="w-full"
+                          className="w-full h-8 sm:h-auto"
                           src={toHttps(activeSurah.audio)}
                         />
                       </div>
 
                       {/* Controls */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <button
                           onClick={() => setShowTranslit(v => !v)}
-                          className="px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-sm transition"
+                          className="px-3 py-2 rounded-xl bg-muted hover:bg-muted/80 text-xs sm:text-sm transition touch-manipulation"
                         >
                           {showTranslit ? "Sembunyikan Transliterasi" : "Tampilkan Transliterasi"}
                         </button>
-                        <div className="hidden lg:flex items-center gap-1">
+                        
+                        <div className="flex items-center gap-1 justify-center">
                           <button
                             onClick={goPrev}
-                            className="p-2 rounded-xl bg-card border border-border/60 hover:bg-muted/70 transition"
+                            className="px-3 py-2 rounded-xl bg-card border border-border/60 hover:bg-muted/70 transition text-xs sm:text-sm touch-manipulation"
                             aria-label="Surat sebelumnya"
                           >
-                            <ChevronLeft className="h-4 w-4" />
+                            <ChevronLeft className="h-4 w-4 inline -mt-0.5 sm:mr-1" />
+                            <span className="hidden sm:inline">Sebelumnya</span>
                           </button>
                           <button
                             onClick={goNext}
-                            className="p-2 rounded-xl bg-card border border-border/60 hover:bg-muted/70 transition"
+                            className="px-3 py-2 rounded-xl bg-card border border-border/60 hover:bg-muted/70 transition text-xs sm:text-sm touch-manipulation"
                             aria-label="Surat selanjutnya"
                           >
-                            <ChevronRight className="h-4 w-4" />
+                            <span className="hidden sm:inline">Selanjutnya</span>
+                            <ChevronRight className="h-4 w-4 inline -mt-0.5 sm:ml-1" />
                           </button>
                         </div>
                       </div>
                     </div>
 
                     {/* Ayah search */}
-                    <div className="p-4">
+                    <div className="p-3 sm:p-4 flex-shrink-0">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
                           value={ayahQuery}
                           onChange={(e) => setAyahQuery(e.target.value)}
-                          placeholder="Cari pada ayat (Arab/ID/transliterasi/nomor)…"
+                          placeholder={isMobile ? "Cari ayat…" : "Cari pada ayat (Arab/ID/transliterasi/nomor)…"}
                           className="w-full pl-9 pr-3 py-2 rounded-xl bg-card border border-border/60 outline-none focus:ring-2 focus:ring-primary/40 transition text-sm"
                           aria-label="Cari ayat"
                         />
@@ -345,7 +383,16 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                     </div>
 
                     {/* Verses list */}
-                    <div ref={listRef} className="h-[24rem] overflow-auto px-4 pb-6">
+                    <div 
+                      ref={listRef} 
+                      className={`overflow-auto px-3 sm:px-4 pb-4 sm:pb-6 flex-1 min-h-0 ${
+                        isMobile ? '' : 'h-[20rem] sm:h-[24rem]'
+                      }`}
+                      style={{ 
+                        WebkitOverflowScrolling: 'touch',
+                        touchAction: 'pan-y'
+                      }}
+                    >
                       {loadingSurah && (
                         <div className="px-1 py-6 text-sm text-muted-foreground">Memuat ayat…</div>
                       )}
@@ -366,16 +413,16 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                             </div>
                             <button
                               onClick={() => copyAyah(v)}
-                              className="p-2 rounded-lg hover:bg-muted/70 transition"
+                              className="p-2 rounded-lg hover:bg-muted/70 transition touch-manipulation"
                               aria-label={`Copy ${activeSurah.nomor}:${v.nomor}`}
                             >
                               <Copy className="h-4 w-4 text-muted-foreground" />
                             </button>
                           </div>
 
-                          <div className="mt-2 text-right leading-relaxed text-lg">
+                          <div className="mt-2 text-right leading-relaxed">
                             {/* Arabic */}
-                            <div dir="rtl" className="font-semibold tracking-wide">
+                            <div dir="rtl" className="font-semibold tracking-wide text-lg sm:text-xl">
                               {v.ar}
                             </div>
                           </div>
@@ -397,26 +444,12 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                         <div className="px-1 py-6 text-sm text-muted-foreground">Tidak ada ayat yang cocok.</div>
                       )}
                     </div>
-
-                    {/* Mobile nav */}
-                    <div className="lg:hidden flex items-center justify-center gap-2 p-3 border-t border-border/60">
-                      <button
-                        onClick={goPrev}
-                        className="px-3 py-2 rounded-xl bg-card border border-border/60 hover:bg-muted/70 transition"
-                      >
-                        <ChevronLeft className="h-4 w-4 inline -mt-0.5" /> Sebelumnya
-                      </button>
-                      <button
-                        onClick={goNext}
-                        className="px-3 py-2 rounded-xl bg-card border border-border/60 hover:bg-muted/70 transition"
-                      >
-                        Selanjutnya <ChevronRight className="h-4 w-4 inline -mt-0.5" />
-                      </button>
-                    </div>
                   </>
                 ) : (
-                  <div className="h-[32rem] flex items-center justify-center p-6 text-sm text-muted-foreground">
-                    Pilih salah satu surat di sebelah kiri untuk mulai membaca.
+                  <div className={`flex items-center justify-center p-6 text-sm text-muted-foreground ${
+                    isMobile ? 'flex-1' : 'h-[32rem]'
+                  }`}>
+                    Pilih salah satu surat{isMobile ? ' dari daftar' : ' di sebelah kiri'} untuk mulai membaca.
                   </div>
                 )}
               </div>
