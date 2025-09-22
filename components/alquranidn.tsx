@@ -13,19 +13,6 @@ import {
   RefreshCcw
 } from "lucide-react"
 
-type SurahItem = {
-  arti: string
-  asma: string
-  audio: string
-  ayat: number
-  keterangan: string
-  nama: string
-  nomor: string // numeric string, e.g. "1"
-  rukuk: string
-  type: "mekah" | "madinah" | string
-  urut: string
-}
-
 type AyahItem = {
   ar: string
   id: string
@@ -33,19 +20,27 @@ type AyahItem = {
   tr?: string
 }
 
+type SurahItem = {
+  nomor: string // numeric string, e.g. "1"
+  nama: string
+  asma: string
+  ayat: AyahItem[]
+  type: "mekah" | "madinah" | string
+  urut: string
+  rukuk: string
+  arti: string
+  keterangan: string
+  audio: string
+}
+
 interface AlQuranIdnProps {
   open: boolean
   onClose: () => void
 }
 
-const NP_SURAH_LIST = "https://api.npoint.io/99c279bb173a6e28359c/data"
-const NP_SURAH_DETAIL = (n: string | number) =>
-  `https://api.npoint.io/99c279bb173a6e28359c/surat/${n}`
-
-// Fallbacks (sometimes handy if NPoint is down)
-// const FB_SURAH_LIST = "https://al-quran-8d642.firebaseio.com/data.json?print=pretty"
-// const FB_SURAH_DETAIL = (n: string | number) =>
-//   `https://al-quran-8d642.firebaseio.com/surat/${n}.json?print=pretty`
+// Single offline JSON (all surahs + verses)
+const OFFLINE_DATA_URL =
+  "https://raw.githubusercontent.com/bachors/Al-Quran-ID-API/refs/heads/master/offline/data.json"
 
 function toHttps(url: string) {
   try {
@@ -75,7 +70,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
   const [ayahQuery, setAyahQuery] = React.useState("")
   const listRef = React.useRef<HTMLDivElement>(null)
 
-  // Fetch list on open
+  // Fetch ALL data once on open (from offline JSON)
   React.useEffect(() => {
     let cancelled = false
     async function run() {
@@ -83,21 +78,23 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
       setLoadingList(true)
       setErrorList(null)
       try {
-        const res = await fetch(NP_SURAH_LIST, { cache: "no-store" })
+        const res = await fetch(OFFLINE_DATA_URL, { cache: "no-store" })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data: SurahItem[] = await res.json()
         if (!cancelled) setSurahs(data)
       } catch (e: any) {
-        if (!cancelled) setErrorList(e?.message || "Gagal memuat daftar surat.")
+        if (!cancelled) setErrorList(e?.message || "Gagal memuat data Quran offline.")
       } finally {
         if (!cancelled) setLoadingList(false)
       }
     }
     run()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [open, surahs.length])
 
-  // Fetch verses for selected surah
+  // "Load" a surah now just selects from the already-fetched dataset
   const loadSurah = React.useCallback(async (s: SurahItem) => {
     setActiveSurah(s)
     setVerses(null)
@@ -105,11 +102,9 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
     setErrorSurah(null)
     setLoadingSurah(true)
     try {
-      const res = await fetch(NP_SURAH_DETAIL(s.nomor), { cache: "no-store" })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data: AyahItem[] = await res.json()
-      setVerses(data)
-      // Scroll verses panel to top
+      // No network call needed—verses are inside s.ayat
+      setVerses(s.ayat)
+      // scroll to top of verses panel
       requestAnimationFrame(() => listRef.current?.scrollTo({ top: 0, behavior: "smooth" }))
     } catch (e: any) {
       setErrorSurah(e?.message || "Gagal memuat ayat.")
@@ -149,6 +144,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
     const found = surahs.find(s => parseInt(s.nomor, 10) === prev)
     if (found) loadSurah(found)
   }
+
   const goNext = () => {
     if (!activeSurah) return
     const curr = parseInt(activeSurah.nomor, 10)
@@ -271,7 +267,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                               <span className="ml-2 text-xs text-muted-foreground">({s.asma})</span>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {s.arti} • {s.ayat} ayat • {s.type}
+                              {s.arti} • {s.ayat.length} ayat • {s.type}
                             </div>
                           </div>
                         </div>
@@ -292,7 +288,7 @@ export function AlQuranIdn({ open, onClose }: AlQuranIdnProps) {
                           {activeSurah.nomor}. {activeSurah.nama} <span className="text-sm text-muted-foreground">({activeSurah.asma})</span>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {activeSurah.arti} • {activeSurah.ayat} ayat • {activeSurah.type}
+                          {activeSurah.arti} • {activeSurah.ayat.length} ayat • {activeSurah.type}
                         </div>
                       </div>
 
