@@ -449,7 +449,7 @@ export function MenuBar() {
 
   useEffect(() => {
     if (!isMobile) return
-    const shouldEnableScroll = activeTab === "Profile" || showLangs
+    const shouldEnableScroll = activeTab === "Profile" || activeTab === "Tools" || showLangs
     if (shouldEnableScroll) {
       document.body.style.overflow = 'auto'
       document.documentElement.style.overflow = 'auto'
