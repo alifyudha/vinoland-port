@@ -19,12 +19,14 @@ import {
   Download,
   Search,
   Shuffle,
+  BookOpen,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { Games } from "./games"
 import { AioDl } from "./aiodl"
 import { RandomPicker } from "./randompicker"
+import { AlQuranIdn } from "./alquranidn"
 
 interface MenuItem {
   icon: React.ReactNode
@@ -376,7 +378,7 @@ function MusicPlayer() {
             <Music className="h-6 w-6 text-white" />
           </motion.div>
 
-          <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
             <h4 className="text-sm font-semibold text-foreground truncate">Alibi</h4>
             <p className="text-xs text-muted-foreground truncate">Sevdaliza ft. Pabllo</p>
           </div>
@@ -430,6 +432,7 @@ export function MenuBar() {
 
   const [openAioDl, setOpenAioDl] = useState(false)
   const [openRandomPicker, setOpenRandomPicker] = useState(false)
+  const [openAlQuranIdn, setOpenAlQuranIdn] = useState(false)
 
   const [toolsQuery, setToolsQuery] = useState("")
 
@@ -460,12 +463,12 @@ export function MenuBar() {
     }
   }, [activeTab, showLangs, isMobile])
 
-  // ---------- Tools catalog (easy to extend later) ----------
+  // ---------- Tools catalog (extendable) ----------
   const tools = useMemo(() => ([
     {
       id: "aiodl",
       title: "All-in-One Downloader",
-      subtitle: "Utility • Download from multiple sources",
+      subtitle: "Free • Download from multiple sources",
       description: "Paste a link from popular sites and download it with ease.",
       icon: <Download className="h-5 w-5 text-primary" />,
       onOpen: () => setOpenAioDl(true),
@@ -475,10 +478,19 @@ export function MenuBar() {
       id: "random-picker",
       title: "Random Picker",
       subtitle: "Utility • Fair random selection",
-      description: "Add names/items and pick one randomly — useful for a giveaway stuff.",
+      description: "Add names/items and pick one randomly — like a Wheel of Names.",
       icon: <Shuffle className="h-5 w-5 text-primary" />,
       onOpen: () => setOpenRandomPicker(true),
       keywords: "random picker wheel raffle choose names items shuffle",
+    },
+    {
+      id: "alquran-idn",
+      title: "AL Quran Indonesia",
+      subtitle: "Reading • ID translation & audio",
+      description: "AL Quran with Indonesian translation and audio.",
+      icon: <BookOpen className="h-5 w-5 text-primary" />,
+      onOpen: () => setOpenAlQuranIdn(true),
+      keywords: "alquran quran qur'an indonesia id surah surat ayat bacaan audio transliteration transliterasi terjemahan",
     },
   ]), [])
 
@@ -562,7 +574,7 @@ export function MenuBar() {
               <input
                 value={toolsQuery}
                 onChange={(e) => setToolsQuery(e.target.value)}
-                placeholder="Search tools (e.g., downloader, random)..."
+                placeholder="Search tools (e.g., downloader, random, quran)…"
                 className="w-full pl-9 pr-3 py-2 rounded-xl bg-card border border-border/60 outline-none focus:ring-2 focus:ring-primary/40 transition"
                 aria-label="Search tools"
               />
@@ -606,6 +618,7 @@ export function MenuBar() {
           {/* Modals mount */}
           <AioDl open={openAioDl} onClose={() => setOpenAioDl(false)} />
           <RandomPicker open={openRandomPicker} onClose={() => setOpenRandomPicker(false)} />
+          <AlQuranIdn open={openAlQuranIdn} onClose={() => setOpenAlQuranIdn(false)} />
         </div>
       )}
 
