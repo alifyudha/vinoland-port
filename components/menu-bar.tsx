@@ -27,6 +27,8 @@ import { Games } from "./games"
 import { AioDl } from "./aiodl"
 import { RandomPicker } from "./randompicker"
 import { AlQuranIdn } from "./alquranidn"
+import { RobloxCodes } from "./robloxcodes"
+
 
 interface MenuItem {
   icon: React.ReactNode
@@ -433,6 +435,7 @@ export function MenuBar() {
   const [openAioDl, setOpenAioDl] = useState(false)
   const [openRandomPicker, setOpenRandomPicker] = useState(false)
   const [openAlQuranIdn, setOpenAlQuranIdn] = useState(false)
+  const [openRobloxCodes, setOpenRobloxCodes] = useState(false)
 
   const [toolsQuery, setToolsQuery] = useState("")
 
@@ -491,6 +494,15 @@ export function MenuBar() {
       icon: <BookOpen className="h-5 w-5 text-primary" />,
       onOpen: () => setOpenAlQuranIdn(true),
       keywords: "alquran quran qur'an indonesia id surah surat ayat bacaan audio transliteration transliterasi terjemahan",
+    },
+    {
+      id: "roblox-codes",
+      title: "Roblox Codes",
+      subtitle: "Games • Redeemable codes",
+      description: "A Working Roblox Codes.",
+      icon: <Search className="h-5 w-5 text-primary" />,
+      onOpen: () => setOpenRobloxCodes(true),
+      keywords: "roblox codes promo game code redeem",
     },
   ]), [])
 
@@ -619,6 +631,7 @@ export function MenuBar() {
           <AioDl open={openAioDl} onClose={() => setOpenAioDl(false)} />
           <RandomPicker open={openRandomPicker} onClose={() => setOpenRandomPicker(false)} />
           <AlQuranIdn open={openAlQuranIdn} onClose={() => setOpenAlQuranIdn(false)} />
+          <RobloxCodes open={openRobloxCodes} onClose={() => setOpenRobloxCodes(false)} />
         </div>
       )}
 
