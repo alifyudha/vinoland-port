@@ -28,6 +28,7 @@ import { AioDl } from "./aiodl"
 import { RandomPicker } from "./randompicker"
 import { AlQuranIdn } from "./alquranidn"
 import { RobloxCodes } from "./robloxcodes"
+import { RetroGames } from "./retrogames"
 
 
 interface MenuItem {
@@ -436,6 +437,7 @@ export function MenuBar() {
   const [openRandomPicker, setOpenRandomPicker] = useState(false)
   const [openAlQuranIdn, setOpenAlQuranIdn] = useState(false)
   const [openRobloxCodes, setOpenRobloxCodes] = useState(false)
+  const [openRetroGames, setOpenRetroGames] = useState(false)
 
   const [toolsQuery, setToolsQuery] = useState("")
 
@@ -503,6 +505,15 @@ export function MenuBar() {
       icon: <Search className="h-5 w-5 text-primary" />,
       onOpen: () => setOpenRobloxCodes(true),
       keywords: "roblox codes promo game code redeem",
+    },
+    {
+    id: "retro-games-rom",
+    title: "Retro Games Rom",
+    subtitle: "Games • Multi-system ROM index",
+    description: "Search and download ROMs from the Myrient Redump mirror.",
+    icon: <Gamepad2 className="h-5 w-5 text-primary" />,
+    onOpen: () => setOpenRetroGames(true),
+    keywords: "rom retro redump ps1 ps2 ps3 psp gba snes nes gamecube wii saturn dreamcast n64",
     },
   ]), [])
 
@@ -632,6 +643,7 @@ export function MenuBar() {
           <RandomPicker open={openRandomPicker} onClose={() => setOpenRandomPicker(false)} />
           <AlQuranIdn open={openAlQuranIdn} onClose={() => setOpenAlQuranIdn(false)} />
           <RobloxCodes open={openRobloxCodes} onClose={() => setOpenRobloxCodes(false)} />
+          <RetroGames open={openRetroGames} onClose={() => setOpenRetroGames(false)} />
         </div>
       )}
 
