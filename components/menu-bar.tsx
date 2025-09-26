@@ -801,10 +801,10 @@ export function MenuBar() {
                 <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
                   <Code2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   <span className="hidden sm:inline">
-                    {showLangs ? "Hide Languages i learn" : "Show Languages i learn"}
+                    {showLangs ? "Hide Languages I Learn" : "Show Languages I Learn"}
                   </span>
                   <span className="sm:hidden">
-                    {showLangs ? "Hide Languages" : "Show Languages i learn"}
+                    {showLangs ? "Hide Languages I Learn" : "Show Languages I Learn"}
                   </span>
                 </span>
                 {showLangs ? (
